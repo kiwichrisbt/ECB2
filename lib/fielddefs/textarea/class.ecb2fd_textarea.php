@@ -43,6 +43,7 @@ class ecb2fd_textarea extends ecb2_FieldDefBase
     {
         // $this->restrict_params = FALSE;    // default: true
         // $this->use_json_format = TRUE;    // default: FALSE - can override e.g. 'groups' type
+        $this->searchable_content = TRUE;
         $this->parameter_aliases = [
             'default_value' => 'default'
         ];
@@ -92,7 +93,7 @@ class ecb2fd_textarea extends ecb2_FieldDefBase
         $tpl->assign( 'is_sub_field', $this->is_sub_field );
         $tpl->assign( 'default', $this->options['default'] );
         $class = '';
-        if ( $this->options['wysiwyg'] ) $class .= ' wysiwyg';
+        if ( $this->options['wysiwyg'] ) $class .= ' wysiwyg TinyMCE';
         if ( $this->is_sub_field ) {
             $tpl->assign( 'sub_row_number', $this->sub_row_number );
             $tpl->assign( 'subFieldName', $this->sub_parent_block.'[r_'.$this->sub_row_number.']['.

@@ -1,7 +1,9 @@
 {* ECB2 admin_changelog.tpl *}
 
-<h3>Version 2.4.3beta1 - 06Nov24</h3>
+<h3>Version 2.4.3 - 09Dec25</h3>
 <ul>
+    <li>all ECB2 text content is now saved in the search index. Previously group & gallery field text content was not indexed.</li>
+    <li>now works with TinyMCE 8+, as used in TinyMCE module v4+</li>
     <li>file_picker - bug fix for the 'type' parameter - parameter is now called 'filetype'. The 'type' parameter clashed with a core parameter and did not function.</li>
     <li>group & gallery - now use default values when adding new items for the sub_fields: textinput, textarea, dropdown, checkbox - BR12672</li>
     <li>replace use of depreciated FILTER_SANITIZE_STRING</li>

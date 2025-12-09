@@ -38,6 +38,7 @@ abstract class ecb2_FieldDefBase
     
     public $use_json_format;
     public $allowed_sub_fields;
+    public $searchable_content;
    
 
     /**
@@ -78,6 +79,7 @@ abstract class ecb2_FieldDefBase
         $this->use_json_format = FALSE;     // single value stored as string ECB2 v1 format for simple fields
         //   once stored as json always stored as jason (output as object not string) - changed to output set by fieldtype
         //if ( !empty($params['repeater']) ) $this->use_json_format = TRUE; // move into fielddef
+        $this->searchable_content = FALSE;
 
     }
 
@@ -318,7 +320,7 @@ abstract class ecb2_FieldDefBase
 
 
     /**
-     *  @return stringif i.e. 'inline_label' set return FALSE - default TRUE
+     *  @return string if i.e. 'inline_label' set return FALSE - default TRUE
      */
     public function is_field_label_visible()
     {
@@ -739,6 +741,107 @@ abstract class ecb2_FieldDefBase
         $tpl = $smarty->CreateTemplate( $this->mod->GetTemplateResource('admin_hidden_field.tpl'), null, null, $smarty );
         return $tpl->fetch();
     } 
+
+
+
+    /**
+     * Adds any json formatted content to the search index - as Content/Search modules don't
+     * This suplements the search_DoEvent function in modules/Search/search.tools.php
+     * @param int $content_obj_id - content object id
+     * @return void
+     */
+    public function AddContentToSearchIndex($content_obj_id = -1)
+    {
+        if ( $this->use_json_format && !empty($this->field_object) ) {
+            $search_content = '';
+
+            if ( !empty($this->field_object->values) && is_array($this->field_object->values) ) {          
+                foreach ( $this->field_object->values as $val ) {
+                    $search_content .= ' ' . strip_tags( trim( $val ) );
+                }
+            }
+
+            // create array of searchable field names
+            $searchable_field_names = [];
+            foreach ( $this->sub_fields as $sub_field_obj ) {
+                if ( $sub_field_obj->searchable_content ) {
+                    $searchable_field_names[] = $sub_field_obj->block_name;
+                }
+            }
+            // add any searchable sub_fields content 
+            if ( !empty($this->field_object->sub_fields) && is_array($this->field_object->sub_fields) && 
+                 !empty($searchable_field_names) ) {
+                foreach ( $this->field_object->sub_fields as $sub_field_obj ) {
+                    if ( is_array($sub_field_obj) ) {
+                        foreach ( $sub_field_obj as $sub_field_name => $sub_field_value ) {
+                            if ( in_array( $sub_field_name, $searchable_field_names ) ) {
+                                $search_content .= ' ' . strip_tags( trim( $sub_field_value ) );
+                            }
+                        }
+                    }
+                }
+            }
+
+            // add to search index
+            $search_content = trim( $search_content );
+            if ( !empty($search_content) ) {
+                $search_mod = \cms_utils::get_search_module();
+                if ( is_object($search_mod ) ) {
+                    $search_mod->AddWords('ECB2', $content_obj_id, $this->block_name, $search_content);
+                }
+            }
+        }
+    }
+
+
+    /**
+     * Adds any already saved json formatted content to the search index - as Content/Search modules don't
+     * Used during a full re-indexing of content
+     * @param int $content_obj_id - content object id
+     * @return void
+     */
+    public function AddSavedContentToSearchIndex($content_obj_id = -1)
+    {
+        if ( !$this->use_json_format || empty($this->values) || !is_array($this->values)) return;
+
+        $search_content = '';
+
+        if ( is_object( $this->values[0] ) ) {  // so array of sub_fields (objects)
+            // create array of searchable field names
+            $searchable_field_names = [];
+            foreach ( $this->sub_fields as $sub_field_obj ) {
+                if ( $sub_field_obj->searchable_content ) {
+                    $searchable_field_names[] = $sub_field_obj->block_name;
+                }
+            }
+            // add any searchable sub_fields content 
+            if ( !empty($searchable_field_names) ) {
+                foreach ( $this->values as $sub_field_obj ) {
+                    foreach ( $sub_field_obj as $sub_field_name => $sub_field_value ) {
+                        if ( in_array( $sub_field_name, $searchable_field_names ) ) {
+                            $search_content .= ' ' . strip_tags( trim( $sub_field_value ) );
+                        }
+                    }
+                }
+            }
+
+        } else {    // so simple array of string values
+            foreach ( $this->values as $val ) {
+                $search_content .= ' ' . strip_tags( trim( $val ) );
+            }
+        }
+                       
+        // add to search index
+        $search_content = trim( $search_content );
+        if ( !empty($search_content) ) {
+            $search_mod = \cms_utils::get_search_module();
+            if ( is_object($search_mod ) ) {
+                $search_mod->AddWords('ECB2', $content_obj_id, $this->block_name, $search_content);
+            }
+
+        }
+        
+    }
 
 
 

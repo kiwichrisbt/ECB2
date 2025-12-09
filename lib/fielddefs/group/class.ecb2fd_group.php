@@ -48,6 +48,7 @@ class ecb2fd_group extends ecb2_FieldDefBase
         // $this->parameter_aliases = [ 'alias' => 'parameter' ];
         $this->restrict_params = FALSE;    // default: true
         $this->use_json_format = TRUE;     // default: FALSE - can override e.g. 'groups' type
+        $this->searchable_content = TRUE;
         $this->allowed_sub_fields = [
             'textinput',
             'textarea',

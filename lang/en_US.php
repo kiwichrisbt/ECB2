@@ -1,5 +1,7 @@
 <?php
 
+#region Lang Strings
+
 $lang['about'] = 'About';
 $lang['add_item'] = 'Add item';
 $lang['add_line'] = 'Add line';
@@ -92,16 +94,7 @@ $lang['upgraded'] = 'Module upgraded to version %s.';
 
 
 
-###    ###   #########   ###        #########
-###    ###   #########   ###        #########
-###    ###   ###         ###        ###   ###
-##########   #########   ###        #########
-##########   #########   ###        #########
-###    ###   ###         ###        ###
-###    ###   #########   #########  ###
-###    ###   #########   #########  ###
-
-
+#region Help
 
 $lang['general_c'] = <<<'EOD'
 <p>The Extended Content Blocks (ECB2) module to give you more page editing options. Many aditional content block types are available to use in each page template. e.g. dropdown, colour picker, checkbox, radio button, and many more.</p>

@@ -26,7 +26,8 @@
 
 class ECB2 extends CMSModule {
 
-    const MODULE_VERSION = '2.4.3beta1';
+    const MODULE_VERSION = '2.4.3';
+    const DEVELOPMENT_MODE = true;          // set to false for production releases
     const MANAGE_PERM = 'manage_ecb2';      // duplicated in upgrade action
 
     const FIELD_TYPES = [
@@ -220,11 +221,12 @@ class ECB2 extends CMSModule {
      */
     public function get_admin_css_js( $echo_now = FALSE )
     {
-        if (cms_utils::get_app_data('ECB2_js_css_loaded')) return;
+        if (cms_utils::get_app_data('ECB2_js_css_loaded')) return '';
         $path = $this->GetModuleURLPath();
+        $version = self::DEVELOPMENT_MODE ? '' : '?v='.self::MODULE_VERSION;
         $admin_css_js = '
-            <link rel="stylesheet" type="text/css" href="'.$path.'/lib/css/ecb2_admin.css?v'.self::MODULE_VERSION.'">
-            <script language="javascript" src="'.$path.'/lib/js/ecb2_admin.js?v'.self::MODULE_VERSION.'"></script>';
+            <link rel="stylesheet" type="text/css" href="'.$path.'/lib/css/ecb2_admin.css'.$version.'">
+            <script language="javascript" src="'.$path.'/lib/js/ecb2_admin.js'.$version.'"></script>';
         cms_utils::set_app_data('ECB2_js_css_loaded', 1);
         if ( $echo_now ) {
             echo $admin_css_js;
@@ -306,6 +308,10 @@ class ECB2 extends CMSModule {
         $ecb2 = new $type($this, $blockName, $value, $blockParams, $adding, $id);
 
         $ecb2_value = $ecb2->get_content_block_value( $inputParams[$blockName] );
+
+        // add any json content to search index as it is otherwise ignored
+        if ( $ecb2->use_json_format && $ecb2->searchable_content ) $ecb2->AddContentToSearchIndex($id);
+
         return $ecb2_value;
 
     }
@@ -329,7 +335,7 @@ class ECB2 extends CMSModule {
     {
         $json_data = json_decode($value);
         if ( json_last_error()===JSON_ERROR_NONE && $json_data!=$value ) {  
-            // JSON is valid and not just a simple string (also valid JSON)
+            // JSON is valid and not just a simple string
             // a hack for backwards compatibility for input_repeater - if assign not used
             switch ( $this->OutputFormat($blockparams) ) {
                 case 'string':
@@ -501,6 +507,73 @@ class ECB2 extends CMSModule {
         $value = preg_replace('/\x00|<[^>]*>?/', '', $value);
         return str_replace(["'", '"'], ['&#39;', '&#34;'], $value);
     }
+
+
+
+    /**
+     *  Prepare search result for display
+     *  @param int $returnid - page id to return results to
+     *  @param int $articleid - article id to search within
+     *  @param string $attr - attribute to search within
+     *  @param string $params - additional search parameters
+     *  @return array - module_name, display text, url
+     */
+    public function SearchResultWithParams($returnid, $contentid, $attr = '', $params = '')
+    {
+        $result = [];
+        $hm = \CmsApp::get_instance()->GetHierarchyManager();
+        $node = $hm->GetNodeById($contentid);
+        if (isset($node)) {
+            $content = $node->GetContent();
+            $result[0] = 'ECB2_content';
+            $result[1] = $content->Name();
+            $result[2] = $content->GetURL( TRUE, FALSE );
+        }
+        return $result;
+    }
+
+
+    /**
+     *  
+     */
+    public function SearchReindex(&$search_module)
+    {
+        $contentops = ContentOperations::get_instance();
+        $hierarchyManager = \CmsApp::get_instance()->GetHierarchyManager();
+        $full_list = array_keys( $hierarchyManager->getFlatList() );
+        // check each content page
+        foreach( $full_list as $one ) {
+            // load the content for this id
+            $content_obj = $contentops->LoadContentFromId($one);
+
+            if ( $content_obj->Active() && $content_obj->IsSearchable() ) {
+                $blocks = $content_obj->GetEditableProperties();
+
+                foreach( $blocks as $block ) {
+                    if ( isset($block->extra['module']) && $block->extra['module']=='ECB2' ) {
+                        $blockName = $block->name;
+                        $value = $content_obj->GetPropertyValue( $blockName );
+                        // test if value is valid json
+                        $json_data = json_decode($value);
+                        if ( json_last_error()===JSON_ERROR_NONE && $json_data!=$value ) {  
+                            // JSON is valid and not just a simple string 
+                            $blockParams = $block->extra['params'];
+                            $this->HandleFieldAliases($blockParams);       
+                            if ( in_array($blockParams["field"], self::FIELD_TYPES ) ) {     
+                                $type = self::FIELD_DEF_PREFIX.$blockParams["field"];
+                                $ecb2 = new $type($this, $blockName, $value, $blockParams, FALSE, $one);
+
+                                $ecb2->AddSavedContentToSearchIndex($one);
+                            }
+                        }
+                    }
+                }
+
+                cms_content_cache::unload($one);
+            }
+        }
+    }
+
 
 
 }
