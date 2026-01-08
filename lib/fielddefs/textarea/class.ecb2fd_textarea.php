@@ -35,7 +35,7 @@ class ecb2fd_textarea extends ecb2_FieldDefBase
      *  sets the allowed parameters for this field type
      *
      *  $this->default_parameters - array of parameter_names => [ default_value, filter_type ]
-     *      FILTER_SANITIZE_STRING, FILTER_VALIDATE_INT, FILTER_VALIDATE_BOOLEAN, FILTER_SANITIZE_EMAIL 
+     *      self::ECB2_SANITIZE_STRING, FILTER_VALIDATE_INT, FILTER_VALIDATE_BOOLEAN, FILTER_SANITIZE_EMAIL 
      *      see: https://www.php.net/manual/en/filter.filters.php
      *  $this->restrict_params - optionally allow any other parameters to be included, e.g. module calls
      */
@@ -43,19 +43,20 @@ class ecb2fd_textarea extends ecb2_FieldDefBase
     {
         // $this->restrict_params = FALSE;    // default: true
         // $this->use_json_format = TRUE;    // default: FALSE - can override e.g. 'groups' type
+        $this->searchable_content = TRUE;
         $this->parameter_aliases = [
             'default_value' => 'default'
         ];
         $this->default_parameters = [
-            'default'       => ['default' => '',    'filter' => FILTER_SANITIZE_STRING], 
-            'label'         => ['default' => '',    'filter' => FILTER_SANITIZE_STRING],
+            'default'       => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING], 
+            'label'         => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
             'rows'          => ['default' => 4,    'filter' => FILTER_VALIDATE_INT],
             'cols'          => ['default' => 80,    'filter' => FILTER_VALIDATE_INT],
             'wysiwyg'       => ['default' => FALSE, 'filter' => FILTER_VALIDATE_BOOLEAN],
             'repeater'      => ['default' => FALSE, 'filter' => FILTER_VALIDATE_BOOLEAN],
             'max_blocks'    => ['default' => 0,     'filter' => FILTER_VALIDATE_INT],
-            'admin_groups'  => ['default' => '',    'filter' => FILTER_SANITIZE_STRING],
-            'assign'        => ['default' => '',    'filter' => FILTER_SANITIZE_STRING],
+            'admin_groups'  => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
+            'assign'        => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
             'description'   => ['default' => '',    'filter' => FILTER_DEFAULT]
         ];
 
@@ -90,8 +91,9 @@ class ecb2fd_textarea extends ecb2_FieldDefBase
         $tpl->assign( 'use_json_format', $this->use_json_format );
         $tpl->assign( 'label', $this->options['label'] );
         $tpl->assign( 'is_sub_field', $this->is_sub_field );
+        $tpl->assign( 'default', $this->options['default'] );
         $class = '';
-        if ( $this->options['wysiwyg'] ) $class .= ' wysiwyg';
+        if ( $this->options['wysiwyg'] ) $class .= ' wysiwyg TinyMCE';
         if ( $this->is_sub_field ) {
             $tpl->assign( 'sub_row_number', $this->sub_row_number );
             $tpl->assign( 'subFieldName', $this->sub_parent_block.'[r_'.$this->sub_row_number.']['.
