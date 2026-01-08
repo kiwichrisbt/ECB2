@@ -1,5 +1,13 @@
 {* ECB2 admin_changelog.tpl *}
 
+<h3>Version 2.4.4 - 08Jan25</h3>
+<ul>
+    <li>further bug fixes so ECB2 fields work with TinyMCE 8 (as used in TinyMCE module v4+) and older versions</li>
+    <li>tweaked help notes for Gallery field type</li>
+</ul>
+<br>
+
+
 <h3>Version 2.4.3 - 09Dec25</h3>
 <ul>
     <li>all ECB2 text content is now saved in the search index. Previously group & gallery field text content was not indexed.</li>
