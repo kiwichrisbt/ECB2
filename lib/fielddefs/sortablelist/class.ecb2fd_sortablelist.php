@@ -105,7 +105,8 @@ class ecb2fd_sortablelist extends ecb2_FieldDefBase
         if ( $this->options['flip_values'] && !empty($options) ) { 
             $options = array_flip($options);
         }
-        $selectedList = explode(',', $this->value);
+        $selected_str = !empty($this->values) ? implode(',', $this->values) : $this->value;
+        $selectedList = explode(',', $selected_str);
         $available = $options;
         $selected = array();
         foreach ($selectedList as $item) {
@@ -117,7 +118,7 @@ class ecb2fd_sortablelist extends ecb2_FieldDefBase
         if ($this->options["max_number"]) // max_number takes precidence if both set
             $this->options["required_number"] = "";
 
-        
+        $class = '';
         $smarty = \CmsApp::get_instance()->GetSmarty();
         $tpl = $smarty->CreateTemplate( 'string:'.$this->get_template(), null, null, $smarty );
         $tpl->assign( 'mod', $this->mod );
@@ -126,15 +127,25 @@ class ecb2fd_sortablelist extends ecb2_FieldDefBase
 
         $tpl->assign( 'selected', $this->value );
 
-    $tpl->assign('selectarea_prefix',$this->block_name);
-    $tpl->assign('selected_str',$this->value);
-    $tpl->assign('selected',$selected);
-    $tpl->assign('available', $available);
-    $tpl->assign('description', $this->options['description']);
-    $tpl->assign('labelLeft', $this->options["label_left"]);
-    $tpl->assign('labelRight', $this->options["label_right"]);
-    $tpl->assign('maxNumber', $this->options["max_number"]);
-    $tpl->assign('requiredNumber', $this->options["required_number"]);
+        $tpl->assign('selectarea_prefix',$this->block_name);
+        $tpl->assign('selected_str',$selected_str);
+        $tpl->assign('selected',$selected);
+        $tpl->assign('available', $available);
+        $tpl->assign('description', $this->options['description']);
+        $tpl->assign('labelLeft', $this->options["label_left"]);
+        $tpl->assign('labelRight', $this->options["label_right"]);
+        $tpl->assign('maxNumber', $this->options["max_number"]);
+        $tpl->assign('requiredNumber', $this->options["required_number"]);
+
+        $tpl->assign( 'is_sub_field', $this->is_sub_field );
+        if ( $this->is_sub_field ) {
+            $tpl->assign( 'sub_row_number', $this->sub_row_number );
+            $tpl->assign( 'subFieldName', $this->sub_parent_block.'[r_'.$this->sub_row_number.']['.
+                $this->block_name.']' );
+            $tpl->assign( 'subFieldId', $this->sub_parent_block.'_r_'.$this->sub_row_number.'_'.
+                $this->block_name );
+            $class .= ' repeater-field';
+        }
 
         $tpl->assign('options', $options );
         return $tpl->fetch();

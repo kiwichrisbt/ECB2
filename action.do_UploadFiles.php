@@ -10,20 +10,25 @@
 
 if ( !defined('CMS_VERSION') ) exit;
 
-if ( !empty($_FILES['file']) ) {
+if ( isset($_FILES['file']) && is_array($_FILES['file']) &&
+     isset($_FILES['file']['name'], $_FILES['file']['tmp_name'], $_FILES['file']['error']) ) {
 
     $result = [];
-    foreach ($_FILES['file']['error'] as $key => $error) {
-        $new_filename = FALSE;
-        $original_filename = $_FILES['file']['name'][$key];
-        if ( $error==UPLOAD_ERR_OK ) {
-            $tmp_filename = $_FILES['file']['tmp_name'][$key];
+    $uploads = $_FILES['file'];
+    if ( !is_array($uploads['name']) ) {
+        foreach ( $uploads as $key => $value ) $uploads[$key] = [$value];
+    }
+
+    foreach ($uploads['error'] as $key => $error) {
+        $original_filename = $uploads['name'][$key] ?? '';
+        $tmp_filename = $uploads['tmp_name'][$key] ?? '';
+        $success = false;
+        if ( (int)$error === UPLOAD_ERR_OK ) {
             $success = ecb2_FileUtils::ECB2MoveUploadedFile( $original_filename, $tmp_filename );
         }
-//  $success = FALSE;     // only for testing!
         $result[] = [
             'name' => $original_filename,
-            'success' => $success    
+            'success' => $success
         ];
     }
 

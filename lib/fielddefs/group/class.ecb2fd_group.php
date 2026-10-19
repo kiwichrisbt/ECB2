@@ -61,7 +61,8 @@ class ecb2fd_group extends ecb2_FieldDefBase
             'file_picker',
             'page_picker',
             'gallery_picker',
-            'module_picker'     
+            'module_picker',
+            'sortablelist',
         ];
         $this->sub_fields_ignored_params = [
             'assign',
@@ -145,6 +146,21 @@ class ecb2fd_group extends ecb2_FieldDefBase
             unset( $inputArray[$row_number] );
         }
         if ( empty($inputArray) ) $inputArray = array('sub_fields' => []);
+
+        foreach ($inputArray as &$groupArray) {
+            if ( !is_array($groupArray) ) continue;
+            foreach ($this->sub_fields as $sub_field) {
+                if ( $sub_field->get_type() !== 'sortablelist' ) continue;
+
+                $field_name = $sub_field->get_block_name();
+                if ( isset($groupArray[$field_name]) && is_string($groupArray[$field_name]) ) {
+                    $groupArray[$field_name] = ($groupArray[$field_name] === '')
+                        ? ['values' => []]
+                        : explode(',', $groupArray[$field_name]);
+                }
+            }
+        }
+        unset($groupArray);
 
         $this->field_object = $this->create_field_object( $inputArray );
     

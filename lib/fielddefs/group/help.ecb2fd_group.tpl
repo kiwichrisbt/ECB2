@@ -54,6 +54,8 @@ sub4_field=radio sub4_name=test7radio sub4_label='radio test' sub4_values='Apple
 {/if}
 {/literal}</pre><br>
 
+<p>A <code>sortablelist</code> subfield is an object whose <code>values</code> property contains the selected items in order, for example <code>{literal}{$sub_field->sizes->values}{/literal}</code>.</p>
+
 <p>Notes & tips:</p>
 <ol>
     <li>change the order of the subX_ parameters to change the order of the fields in the admin page.</li>

@@ -158,14 +158,46 @@ class ecb2_FileUtils
 
     /**
      *  upload file into ECB2ImagesTempPath
+    *      allowed types: jpg, jpeg, png, gif, webp, mp3, mp4
      *
-     *  @return boolean $success
      *  @param string $original_filename - original filename of uploaded file
      *  @param string $tmp_filename - temp filename of the file on the server
+     *  @return boolean $success
      */
     public static function ECB2MoveUploadedFile( $original_filename, $tmp_filename  ) 
     {
-        if ( empty($original_filename) || empty($tmp_filename) ) return false;
+           if ( !is_string($original_filename) || $original_filename === '' ||
+               !is_string($tmp_filename) || $tmp_filename === '' ) return false;
+
+           if ( basename($original_filename) !== $original_filename ||
+               preg_match('/[\x00-\x1F\x7F\\\/]/', $original_filename) ) return false;
+
+        if ( !preg_match('/\A[a-z0-9][a-z0-9 _-]*\.(?:jpe?g|png|gif|webp|mp3|mp4)\z/i', $original_filename) ) {
+            return false;
+        }
+
+           $allowed_types = [
+              'jpg' => 'image/jpeg',
+              'jpeg' => 'image/jpeg',
+              'png' => 'image/png',
+              'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'mp3' => ['audio/mpeg', 'audio/mp3'],
+            'mp4' => ['video/mp4', 'application/mp4']
+           ];
+           $extension = strtolower(pathinfo($original_filename, PATHINFO_EXTENSION));
+           if ( !isset($allowed_types[$extension]) ) return false;
+
+        if ( in_array($extension, ['mp3', 'mp4'], true) ) {
+            if ( !class_exists('finfo') ) return false;
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $detected_type = $finfo->file($tmp_filename);
+            if ( !in_array($detected_type, $allowed_types[$extension], true) ) return false;
+        } else {
+            $image_info = @getimagesize($tmp_filename);
+            if ( !$image_info || !isset($image_info['mime']) ||
+                 $image_info['mime'] !== $allowed_types[$extension] ) return false;
+        }
 
         $ecb2_images_path = self::ECB2ImagesTempPath();
         $success = cms_move_uploaded_file( $tmp_filename, $ecb2_images_path.$original_filename );

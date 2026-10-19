@@ -353,6 +353,16 @@ abstract class ecb2_FieldDefBase
 
 
     /**
+     *  returns the block name for this field
+     */
+    public function get_block_name()
+    {
+        return $this->block_name;
+    }
+
+
+
+    /**
      *  returns the default input smarty template contents 
      *  retrieved from cached_template if already read and saved
      *  see LISEFielddefBase for ideas :)
@@ -763,9 +773,11 @@ abstract class ecb2_FieldDefBase
 
             // create array of searchable field names
             $searchable_field_names = [];
-            foreach ( $this->sub_fields as $sub_field_obj ) {
-                if ( $sub_field_obj->searchable_content ) {
-                    $searchable_field_names[] = $sub_field_obj->block_name;
+            if ( !empty($this->sub_fields) ) {
+                foreach ( $this->sub_fields as $sub_field_obj ) {
+                    if ( $sub_field_obj->searchable_content ) {
+                        $searchable_field_names[] = $sub_field_obj->block_name;
+                    }
                 }
             }
             // add any searchable sub_fields content 

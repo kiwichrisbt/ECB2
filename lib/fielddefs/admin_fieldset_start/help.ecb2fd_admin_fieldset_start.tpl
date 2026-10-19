@@ -8,7 +8,7 @@
 
 <pre>{literal}{content_module module=ECB2 field=admin_fieldset_start block=test label='15: admin_fieldset_start'}{/literal}</pre>
 
-<p>TIP: set label='&nbsp;' to not show the field label.</p>
+<p>TIP: set label='&amp;nbsp;' to not show the field label.</p>
 
 <p>Parameters:</p>
 <ul>

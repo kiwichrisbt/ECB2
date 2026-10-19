@@ -1,7 +1,8 @@
 {* input.ecb2fd_admin_fieldset_end.tpl - v1.0 - 25Jun22 
 
 ***************************************************************************************************}
-{if !$is_demo}
+<!-- ECB2 Admin Fieldset End -->
+{*if !$is_demo}
             </p>
         </div>
     </fieldset>
@@ -9,4 +10,4 @@
         <p>
 {else}
     </fieldset>
-{/if}
+{/if*}

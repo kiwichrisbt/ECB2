@@ -12,7 +12,7 @@
 <ul>
     <li>field (required) - 'hidden'</li>
     <li>block (required) - the name of the content block</li>
-    <li>label (optional) - Tip: If you add label='&nbsp;' the label will be hidden</li>
+    <li>label (optional) - Tip: If you add label='&amp;nbsp;' the label will be hidden</li>
     <li>value (optional) - sets the value</li>
     <li>description (optional) - adds additional text explanation for editor</li>
 </ul>

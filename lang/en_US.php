@@ -1,6 +1,6 @@
 <?php
 
-#region Lang Strings
+#region Language Strings
 
 $lang['about'] = 'About';
 $lang['add_item'] = 'Add item';

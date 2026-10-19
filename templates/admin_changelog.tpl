@@ -1,5 +1,15 @@
 {* ECB2 admin_changelog.tpl *}
 
+<h3>Version 2.5.0-beta.1 - 13Oct26</h3>
+<ul>
+    <li>fix help for forcing an empty label '&amp;nbsp;' required</li>
+    <li>Group field - max_blocks now works correctly</li>
+    <li>ECB2MoveUploadedFile - allowed filed types now limited to: jpg, jpeg, png, gif, webp, mp3, mp4</li>
+    <li>Group field - now can include sortablelist as a sub field</li>
+</ul>
+<br>
+
+
 <h3>Version 2.4.4 - 08Jan25</h3>
 <ul>
     <li>further bug fixes so ECB2 fields work with TinyMCE 8 (as used in TinyMCE module v4+) and older versions</li>
