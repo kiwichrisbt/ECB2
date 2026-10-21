@@ -1,11 +1,13 @@
 {* ECB2 admin_changelog.tpl *}
 
-<h3>Version 2.5.0-beta.1 - 13Oct26</h3>
+<h3>Version 2.5.0-beta.4 - 21Oct26</h3>
 <ul>
     <li>fix help for forcing an empty label '&amp;nbsp;' required</li>
     <li>Group field - max_blocks now works correctly</li>
     <li>ECB2MoveUploadedFile - allowed filed types now limited to: jpg, jpeg, png, gif, webp, mp3, mp4</li>
     <li>Group field - now can include sortablelist as a sub field</li>
+    <li>Group field - added copy functionality for group of sub fields</li>
+    <li>Group field - file_picker - fixed bug so edit & delete now work correctly</li>
 </ul>
 <br>
 

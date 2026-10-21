@@ -20,6 +20,7 @@ $lang['adminSectionOptions'] = [
 
 $lang['content_block_label_selected'] = 'Selected';
 $lang['content_block_label_available'] = 'Available';
+$lang['copy_item'] = 'Copy item';
 $lang['customgs_field_error'] = "Please create field '%s' in CustomGS";
 
 $lang['drop_items'] = 'No items selected - drop selected items here';
@@ -69,7 +70,7 @@ $lang['postuninstall'] = 'Extended Content Blocks was successful uninstalled';
 
 $lang['really_uninstall'] = 'Really? Are you sure you want to uninstall the ECB2 module?';
 $lang['remove'] = 'Remove';
-$lang['remove_line'] = 'Remove line';
+$lang['remove_line'] = 'Remove item';
 
 $lang['save_options'] = 'Save Options';
 $lang['selected'] = 'Selected';

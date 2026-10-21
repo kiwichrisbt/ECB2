@@ -26,6 +26,7 @@
         {/foreach}
             <div class="right-panel controls">
                 <button class="ecb2-repeater-remove ecb2-btn ecb2-btn-default ecb2-icon-only" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('remove_line')}" role="button" aria-disabled="false"><span class="ecb2-icon-trash-can-regular"></span></button>
+                <button class="ecb2-repeater-copy ecb2-btn ecb2-btn-default ecb2-icon-only" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('copy_item')}" role="button" aria-disabled="false"><span class="ecb2-icon-copy"></span></button>
             </div>
         </div>
 
@@ -45,6 +46,7 @@
 
             <div class="right-panel controls">
                 <button class="ecb2-repeater-remove ecb2-btn ecb2-btn-default ecb2-icon-only" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('remove_line')}" role="button" aria-disabled="false"><span class="ecb2-icon-trash-can-regular"></span></button>
+                <button class="ecb2-repeater-copy ecb2-btn ecb2-btn-default ecb2-icon-only" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('copy_item')}" role="button" aria-disabled="false"><span class="ecb2-icon-copy"></span></button>
             </div>
         </div>
     {/foreach}
@@ -79,6 +81,7 @@
                 {/foreach}
                     <td class="right-panel controls">
                         <button class="ecb2-repeater-remove ecb2-btn ecb2-btn-default ecb2-icon-only" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('remove_line')}" role="button" aria-disabled="false"><span class="ecb2-icon-trash-can-regular"></span></button>
+                        <button class="ecb2-repeater-copy ecb2-btn ecb2-btn-default ecb2-icon-only" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('copy_item')}" role="button" aria-disabled="false"><span class="ecb2-icon-copy"></span></button>
                     </td>
                 </tr>
 
@@ -97,6 +100,7 @@
 
                     <td class="right-panel controls">
                         <button class="ecb2-repeater-remove ecb2-btn ecb2-btn-default ecb2-icon-only" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('remove_line')}" role="button" aria-disabled="false"><span class="ecb2-icon-trash-can-regular"></span></button>
+                        <button class="ecb2-repeater-copy ecb2-btn ecb2-btn-default ecb2-icon-only" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('copy_item')}" role="button" aria-disabled="false"><span class="ecb2-icon-copy"></span></button>
                     </td>
                 </tr>
             {/foreach}

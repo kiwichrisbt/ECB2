@@ -21,7 +21,7 @@
     font-style:normal; font-variant:normal; line-height:1;text-transform:none; font-size:16px;
     color:inherit; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
 
-
+.ecb2-icon-copy:before {content:'\e90c';}
 .ecb2-icon-file-o:before {content:'\e90a';}
 .ecb2-icon-minus-solid:before {content:'\e900';}
 .ecb2-icon-plus-solid:before {content:'\e901';}
