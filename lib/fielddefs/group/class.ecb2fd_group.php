@@ -61,6 +61,7 @@ class ecb2fd_group extends ecb2_FieldDefBase
             'file_picker',
             'page_picker',
             'gallery_picker',
+            'gallery',
             'module_picker',
             'sortablelist',
         ];
@@ -147,20 +148,31 @@ class ecb2fd_group extends ecb2_FieldDefBase
         }
         if ( empty($inputArray) ) $inputArray = array('sub_fields' => []);
 
+        $gallery_jobs = [];
         foreach ($inputArray as &$groupArray) {
             if ( !is_array($groupArray) ) continue;
             foreach ($this->sub_fields as $sub_field) {
-                if ( $sub_field->get_type() !== 'sortablelist' ) continue;
-
                 $field_name = $sub_field->get_block_name();
-                if ( isset($groupArray[$field_name]) && is_string($groupArray[$field_name]) ) {
-                    $groupArray[$field_name] = ($groupArray[$field_name] === '')
-                        ? ['values' => []]
-                        : explode(',', $groupArray[$field_name]);
+
+                if ( $sub_field->get_type() === 'sortablelist' ) {
+                    if ( isset($groupArray[$field_name]) && is_string($groupArray[$field_name]) ) {
+                        $groupArray[$field_name] = ($groupArray[$field_name] === '')
+                            ? ['values' => []]
+                            : explode(',', $groupArray[$field_name]);
+                    }
+
+                } elseif ( $sub_field->get_type() === 'gallery' ) {
+                    $prep = $sub_field->prepare_row_input( $groupArray[$field_name] ?? [] );
+                    $groupArray[$field_name] = $prep['data'];
+                    $gallery_jobs[] = [$sub_field, $prep];
                 }
             }
         }
         unset($groupArray);
+
+        // copy images for copied rows first (sources may still be in _tmp), then move/thumbnail/clean
+        foreach ($gallery_jobs as list($sub_field, $prep)) $sub_field->copy_row_images( $prep );
+        foreach ($gallery_jobs as list($sub_field, $prep)) $sub_field->finalise_row_images( $prep );
 
         $this->field_object = $this->create_field_object( $inputArray );
     
@@ -177,7 +189,15 @@ class ecb2fd_group extends ecb2_FieldDefBase
     public function is_empty_group( $groupArray=[] ) 
     {
         $isEmpty = TRUE;
-        foreach ($groupArray as $value) {
+        $gallery_fields = [];
+        foreach ($this->sub_fields ?: [] as $sub_field) {
+            if ( $sub_field->get_type() === 'gallery' ) $gallery_fields[$sub_field->get_block_name()] = $sub_field;
+        }
+        foreach ($groupArray as $name => $value) {
+            if ( isset($gallery_fields[$name]) ) {   // gallery always posts hidden inputs - check for images only
+                if ( $gallery_fields[$name]->input_has_items($value) ) { $isEmpty = FALSE; break; }
+                continue;
+            }
             if (!empty($value) && (int)$value!=-1) {
                 $isEmpty = FALSE;
                 break;

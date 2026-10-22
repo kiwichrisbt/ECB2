@@ -5,7 +5,7 @@
         {$description}<br>
 {/if}
 
-<div class="ecb2-dropzone {if $max_files!=1}sortable{/if} dropzone-previews" data-dropzone-url="{$action_url}" data-block-name="{$block_name}" data-location="{$location}" data-dropzone-values="{$json_filenames|cms_escape}" data-dropzone-thumbnail-width="{$thumbnail_width}" data-dropzone-thumbnail-height="{$thumbnail_height}" data-dropzone-thumbnail-prefix="{$thumbnail_prefix}"{if $resize_width} data-dropzone-resize-width="{$resize_width}"{/if}{if $resize_height} data-dropzone-resize-height="{$resize_height}"{/if}{if $resize_method} data-dropzone-resize-method="{$resize_method}"{/if}{if $max_files>0} data-dropzone-max-files="{$max_files}"{/if} data-dropzone-max-files-text="{$max_files_text}" data-highest-row="{$values|@count}">
+<div class="ecb2-dropzone {if $max_files!=1}sortable{/if} dropzone-previews{if $is_template} ecb2-dz-template{/if}" data-dropzone-url="{$action_url}" data-block-name="{$name_prefix}" data-id-prefix="{$id_prefix}" data-field-name="{$block_name}" data-location="{$location}" data-dropzone-values="{$json_filenames|cms_escape}" data-dropzone-thumbnail-width="{$thumbnail_width}" data-dropzone-thumbnail-height="{$thumbnail_height}" data-dropzone-thumbnail-prefix="{$thumbnail_prefix}"{if $resize_width} data-dropzone-resize-width="{$resize_width}"{/if}{if $resize_height} data-dropzone-resize-height="{$resize_height}"{/if}{if $resize_method} data-dropzone-resize-method="{$resize_method}"{/if}{if $max_files>0} data-dropzone-max-files="{$max_files}"{/if} data-dropzone-max-files-text="{$max_files_text}" data-highest-row="{$values|@count}">
     <div class="fallback ecb2-fallback">
         <input name="file" type="file" multiple />
     </div>
@@ -32,15 +32,19 @@
         </div>
     </div>
 
-    <div id="{$block_name}-upload-prompt" class="dz-upload-prompt ecb2-btn ecb2-btn-default" style="{if $thumbnail_height} height:{$thumbnail_height}px;{/if}" title="Drop images here or click to upload">
+    <div id="{$id_prefix}-upload-prompt" class="dz-upload-prompt ecb2-btn ecb2-btn-default" style="{if $thumbnail_height} height:{$thumbnail_height}px;{/if}" title="Drop images here or click to upload">
         <span class="ecb2-icon-plus"></span>
-        <input id="" name="{$block_name}[empty]" class="dz-input-filename" type="hidden" value=""/>{* force input array even if empty - so any deleted images can, if required, be removed from dir *}
+        <input id="" name="{$name_prefix}[empty]" class="dz-input-filename" type="hidden" value=""/>{* force input array even if empty - so any deleted images can, if required, be removed from dir *}
     </div>
+{if $is_sub_field}
+    <input type="hidden" class="dz-dir-key" name="{$name_prefix}[dir_key]" value="{$gallery_key}">
+    <input type="hidden" class="dz-copy-from" name="{$name_prefix}[copy_from]" value="">
+{/if}
 </div>
 
 {* sub-fields outside of dropzone to ensure they are later in the DOM *}
 
-<div id="{$block_name}-sub-fields" class="ecb2-dz-sub-fields">
+<div id="{$id_prefix}-sub-fields" class="ecb2-dz-sub-fields">
     <div class="dz-sub-fields-template" data-sub-field-parent="{$block_name}-sub-fields">
         {foreach $sub_fields as $field_def}
         <div class="sub-field sub-field-{$field_def->get_type()}">

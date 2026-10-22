@@ -13,6 +13,11 @@ class ecb2_FileUtils
     const ECB2_IMAGE_DIR = '_ecb2_images';
     const ECB2_IMAGE_TEMP_DIR = '_tmp';     // sub dir of ECB2_IMAGE_DIR
     const THUMB_PREFIX = 'thumb_'; 
+    const SVG_MAX_BYTES = 1048576;      // 1MB
+    const SVG_ELEMENTS = ['svg','g','defs','title','desc','path','rect','circle','ellipse','line','polyline',
+        'polygon','text','tspan','lineargradient','radialgradient','stop','clippath','mask','use','symbol',
+        'pattern','image','style','filter','fegaussianblur','feoffset','feblend','fecolormatrix','femerge',
+        'femergenode','fecomposite','feflood','fedropshadow','marker'];
 
 
     /**
@@ -170,9 +175,9 @@ class ecb2_FileUtils
                !is_string($tmp_filename) || $tmp_filename === '' ) return false;
 
            if ( basename($original_filename) !== $original_filename ||
-               preg_match('/[\x00-\x1F\x7F\\\/]/', $original_filename) ) return false;
+               preg_match('#[\x00-\x1F\x7F\\\\/]#', $original_filename) ) return false;
 
-        if ( !preg_match('/\A[a-z0-9][a-z0-9 _-]*\.(?:jpe?g|png|gif|webp|mp3|mp4)\z/i', $original_filename) ) {
+        if ( !preg_match('/\A[a-z0-9][a-z0-9 _-]*\.(?:jpe?g|png|gif|webp|svg|mp3|mp4)\z/i', $original_filename) ) {
             return false;
         }
 
@@ -182,13 +187,17 @@ class ecb2_FileUtils
               'png' => 'image/png',
               'gif' => 'image/gif',
             'webp' => 'image/webp',
+            'svg' => 'image/svg+xml',
             'mp3' => ['audio/mpeg', 'audio/mp3'],
             'mp4' => ['video/mp4', 'application/mp4']
            ];
            $extension = strtolower(pathinfo($original_filename, PATHINFO_EXTENSION));
            if ( !isset($allowed_types[$extension]) ) return false;
 
-        if ( in_array($extension, ['mp3', 'mp4'], true) ) {
+        if ( $extension === 'svg' ) {
+            // svg can contain scripts - only accept if it can be sanitised (file is rewritten in place)
+            if ( filesize($tmp_filename) > self::SVG_MAX_BYTES || !self::sanitize_svg_file($tmp_filename) ) return false;
+        } elseif ( in_array($extension, ['mp3', 'mp4'], true) ) {
             if ( !class_exists('finfo') ) return false;
             $finfo = new finfo(FILEINFO_MIME_TYPE);
             $detected_type = $finfo->file($tmp_filename);
@@ -319,6 +328,7 @@ class ecb2_FileUtils
     public static function create_thumbnail($src, $thumb_width=0, $thumb_height=0, $dest=NULL, $force=FALSE)
     {
         if ( !file_exists($src) || !is_file($src) ) return FALSE;
+        if ( self::is_svg($src) ) return TRUE;   // vector - the original is used as its own thumbnail
         if ( !$dest ) {
             $bn = basename($src);
             $dn = dirname($src);
@@ -337,8 +347,8 @@ class ecb2_FileUtils
         self::get_thumbnail_size($src_width, $src_height, $thumb_width, $thumb_height, $src_x, $src_y);
 
         // if thumbnail exists and is of correct size - leave as is, unless $force set
-        $thumb_info = getimagesize($dest);
-        if ( !$force || !$thumb_info || !isset($thumb_info['mime']) ) {
+        $thumb_info = is_file($dest) ? getimagesize($dest) : FALSE;
+        if ( !$force && $thumb_info && isset($thumb_info['mime']) ) {
             if ( $thumb_info[0]==$thumb_width && $thumb_info[1]==$thumb_height ) {
                 return true;
             }
@@ -476,6 +486,8 @@ class ecb2_FileUtils
      */
     public static function get_thumbnail_url($src, $thumb_width=0, $thumb_height=0, $dest=NULL, $force=FALSE)
     {
+        if ( self::is_svg($src) ) return is_file($src) ? self::admin_path2url($src) : '';
+
         $created = self::create_thumbnail($src, $thumb_width, $thumb_height, $dest, $force);
 
         if ( !$created ) return '';
@@ -489,6 +501,96 @@ class ecb2_FileUtils
 
         return self::admin_path2url($dest);
 
+    }
+
+
+
+    /**
+     *  @return boolean true if $filename has an svg extension
+     */
+    public static function is_svg( $filename )
+    {
+        return strtolower(pathinfo((string)$filename, PATHINFO_EXTENSION)) === 'svg';
+    }
+
+
+
+    /**
+     *  rewrites an svg file with only safe content
+     *  @param string $path - svg file path
+     *  @return boolean true if file was a valid svg and has been sanitised
+     */
+    public static function sanitize_svg_file( $path )
+    {
+        $svg = @file_get_contents($path);
+        $clean = self::sanitize_svg_string($svg);
+        if ( $clean === FALSE ) return FALSE;
+        return file_put_contents($path, $clean) !== FALSE;
+    }
+
+
+
+    /**
+     *  @param string $svg - svg markup
+     *  @return string|FALSE svg markup with scripts, event handlers, external references and any element 
+     *          not in SVG_ELEMENTS removed - or FALSE if not a valid svg
+     */
+    public static function sanitize_svg_string( $svg )
+    {
+        if ( !is_string($svg) || $svg === '' || stripos($svg, '<!ENTITY') !== FALSE ) return FALSE;
+
+        $prev = libxml_use_internal_errors(TRUE);
+        $doc = new DOMDocument();
+        $loaded = $doc->loadXML( $svg, LIBXML_NONET | LIBXML_NOBLANKS );
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev);
+        $root = $doc->documentElement;
+        if ( !$loaded || !$root || strtolower($root->localName) !== 'svg' ) return FALSE;
+
+        self::sanitize_svg_node( $root );
+        return $doc->saveXML( $root );
+    }
+
+
+
+    /**
+     *  recursively removes unsafe elements, attributes & style content from an svg element
+     */
+    protected static function sanitize_svg_node( DOMElement $el )
+    {
+        foreach ( iterator_to_array($el->childNodes) as $child ) {
+            if ( $child instanceof DOMElement ) {
+                if ( !in_array(strtolower($child->localName), self::SVG_ELEMENTS, TRUE) ||
+                     ($child->namespaceURI !== NULL && $child->namespaceURI !== 'http://www.w3.org/2000/svg') ) {
+                    $el->removeChild($child);
+                } else {
+                    self::sanitize_svg_node( $child );
+                }
+            } elseif ( $child instanceof DOMText || $child instanceof DOMCdataSection ) {
+                if ( strtolower($el->localName) === 'style' &&
+                     preg_match('/@import|expression\s*\(|javascript:|url\s*\(\s*[\'"]?\s*(?!#)/i', $child->nodeValue) ) {
+                    $el->removeChild($child);
+                }
+            } else {
+                $el->removeChild($child);   // comments, processing instructions
+            }
+        }
+
+        foreach ( iterator_to_array($el->attributes) as $attr ) {
+            $name = strtolower($attr->nodeName);
+            $value = trim($attr->nodeValue);
+            $remove = FALSE;
+            if ( strpos($name, 'on') === 0 ) {
+                $remove = TRUE;
+            } elseif ( $name === 'href' || $name === 'xlink:href' ) {
+                // internal references or embedded raster images only
+                $remove = !( $value !== '' && $value[0] === '#' ) &&
+                          !preg_match('#^data:image/(png|jpe?g|gif|webp);base64,[a-z0-9+/=\s]+$#i', $value);
+            } elseif ( preg_match('/javascript:|expression\s*\(|@import|url\s*\(\s*[\'"]?\s*(?!#)/i', $value) ) {
+                $remove = TRUE;
+            }
+            if ( $remove ) $el->removeAttributeNode($attr);
+        }
     }
 
 

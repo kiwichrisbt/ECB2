@@ -786,7 +786,7 @@ abstract class ecb2_FieldDefBase
                 foreach ( $this->field_object->sub_fields as $sub_field_obj ) {
                     if ( is_array($sub_field_obj) ) {
                         foreach ( $sub_field_obj as $sub_field_name => $sub_field_value ) {
-                            if ( in_array( $sub_field_name, $searchable_field_names ) ) {
+                            if ( in_array( $sub_field_name, $searchable_field_names ) && is_scalar($sub_field_value) ) {
                                 $search_content .= ' ' . strip_tags( trim( $sub_field_value ) );
                             }
                         }
@@ -830,7 +830,7 @@ abstract class ecb2_FieldDefBase
             if ( !empty($searchable_field_names) ) {
                 foreach ( $this->values as $sub_field_obj ) {
                     foreach ( $sub_field_obj as $sub_field_name => $sub_field_value ) {
-                        if ( in_array( $sub_field_name, $searchable_field_names ) ) {
+                        if ( in_array( $sub_field_name, $searchable_field_names ) && is_scalar($sub_field_value) ) {
                             $search_content .= ' ' . strip_tags( trim( $sub_field_value ) );
                         }
                     }

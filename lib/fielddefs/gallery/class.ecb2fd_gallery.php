@@ -10,6 +10,9 @@
 
 class ecb2fd_gallery extends ecb2_FieldDefBase 
 {
+    const KEY_PATTERN = '/^g[a-f0-9]{12}$/';
+    protected $gallery_key = '';    // sub_field only: folder key of the current group row
+
 
 	public function __construct($mod, $blockName, $value, $params, $adding, $id=0) 
 	{	
@@ -48,6 +51,116 @@ class ecb2fd_gallery extends ecb2_FieldDefBase
             $this->values[] = $value;
 
         } 
+    }
+
+
+
+    /**
+     *  as a group sub_field: images only - ignore this gallery's own sub_fields
+     */
+    public function set_as_subfield($parent_block_name)
+    {
+        parent::set_as_subfield($parent_block_name);
+        $this->sub_fields = [];
+        $this->error = '';
+    }
+
+    /**
+     *  group sub_field: sets this gallery's values for one group row
+     *  @param object $fields - all values for the group row
+     *  @param integer $row_number
+     */
+    public function set_sub_field_value($fields, $row_number)
+    {
+        $this->value = '';
+        $this->values = [];
+        $this->gallery_key = '';
+        $block = $fields->{$this->block_name} ?? NULL;
+        if ( is_object($block) ) {
+            if ( !empty($block->sub_fields) && is_array($block->sub_fields) ) {
+                $this->values = $block->sub_fields;
+            }
+            if ( !empty($block->dir_key) && preg_match(self::KEY_PATTERN, $block->dir_key) ) {
+                $this->gallery_key = $block->dir_key;
+            }
+        }
+        $this->sub_row_number = $row_number;
+    }
+
+    /** @return string unique images dir 'name' for one group row's gallery */
+    protected function row_dir_name($key)
+    {
+        return $this->sub_parent_block.'_'.$this->block_name.'_'.$key;
+    }
+
+    /** @return boolean true if posted gallery input contains at least one image */
+    public function input_has_items($input)
+    {
+        if ( !is_array($input) ) return FALSE;
+        foreach ($input as $k => $v) {
+            if ( preg_match('/^r_[0-9]+$/', $k) && is_array($v) && !empty($v['filename']) ) return TRUE;
+        }
+        return FALSE;
+    }
+
+    /**
+     *  group sub_field: validate & normalise one row's posted gallery data
+     *  @return array [key, copy_from, filenames, data] - data is in create_field_object format
+     */
+    public function prepare_row_input($input)
+    {
+        $input = is_array($input) ? $input : [];
+        $key = ( isset($input['dir_key']) && is_string($input['dir_key']) && 
+                 preg_match(self::KEY_PATTERN, $input['dir_key']) ) ? $input['dir_key'] : '';
+        $copy_from = ( $key === '' && isset($input['copy_from']) && is_string($input['copy_from']) && 
+                       preg_match(self::KEY_PATTERN, $input['copy_from']) ) ? $input['copy_from'] : '';
+        $is_new = ($key === '');
+        if ($is_new) $key = 'g'.bin2hex(random_bytes(6));
+
+        $location = ecb2_FileUtils::ECB2ImagesRelativeUrl( $this->row_dir_name($key), $this->id );
+        $data = ['dir_key' => $key];
+        $filenames = [];
+        $n = 0;
+        foreach ($input as $k => $item) {
+            if ( !preg_match('/^r_[0-9]+$/', $k) || !is_array($item) ) continue;
+            $filename = $item['filename'] ?? '';
+            if ( !is_string($filename) || $filename === '' || basename($filename) !== $filename ) continue;
+            $n++;
+            $data['r_'.$n] = ['filename' => $filename, 'file_location' => $location];
+            $filenames[] = $filename;
+        }
+        if ( $n === 0 ) $data['sub_fields'] = [];
+
+        return ['key' => $key, 'copy_from' => $copy_from, 'is_new' => $is_new,
+                'filenames' => $filenames, 'data' => $data];
+    }
+
+    /** group sub_field: copy images from the source row's dir (or _tmp) into a copied row's new dir */
+    public function copy_row_images($prep)
+    {
+        if ( empty($prep['copy_from']) || empty($prep['filenames']) ) return;
+
+        $src = ecb2_FileUtils::ECB2ImagesPath( $this->row_dir_name($prep['copy_from']), $this->id );
+        $dest = ecb2_FileUtils::ECB2ImagesPath( $this->row_dir_name($prep['key']), $this->id );
+        $tmp = ecb2_FileUtils::ECB2ImagesTempPath();
+        if ( !is_dir($dest) ) mkdir($dest, 0755, true);
+        foreach ($prep['filenames'] as $filename) {
+            if ( file_exists($dest.$filename) ) continue;
+            if ( is_file($src.$filename) ) {
+                copy( $src.$filename, $dest.$filename );
+            } elseif ( is_file($tmp.$filename) ) {
+                copy( $tmp.$filename, $dest.$filename );
+            }
+        }
+    }
+
+    /** group sub_field: move uploads from _tmp, create thumbnails, remove unused files for one row */
+    public function finalise_row_images($prep)
+    {
+        $dir = ecb2_FileUtils::ECB2ImagesPath( $this->row_dir_name($prep['key']), $this->id );
+        if ( empty($prep['filenames']) && !is_dir($dir) ) return;
+        ecb2_FileUtils::updateGalleryDir( $prep['filenames'], $dir, $this->options['auto_add_delete'],
+            $this->options['thumbnail_width'], $this->options['thumbnail_height'] );
     }
 
 
@@ -117,9 +230,21 @@ class ecb2fd_gallery extends ecb2_FieldDefBase
             return $this->ecb2_hidden_field(); 
         }
 
-        $location = ecb2_FileUtils::ECB2ImagesUrl( $this->block_name, $this->id, '', $this->options['dir'] );
-        $dir = ecb2_FileUtils::ECB2ImagesPath( $this->block_name, $this->id, '', $this->options['dir'] );
-        if ( $this->options['auto_add_delete'] ) {
+        if ( $this->is_sub_field ) {   // inside a group row: own folder per row, 'dir' option ignored
+            $is_template = is_null($this->sub_row_number);      // hidden row template - JS fills in names/ids
+            $name_prefix = $is_template ? '' : $this->sub_parent_block.'[r_'.$this->sub_row_number.']['.$this->block_name.']';
+            $id_prefix = $is_template ? '' : $this->sub_parent_block.'_r_'.$this->sub_row_number.'_'.$this->block_name;
+            $has_dir = ( $this->gallery_key !== '' );
+            $dir_name = $has_dir ? $this->row_dir_name($this->gallery_key) : '';
+            $location = $has_dir ? ecb2_FileUtils::ECB2ImagesUrl( $dir_name, $this->id ) : '';
+            $dir = $has_dir ? ecb2_FileUtils::ECB2ImagesPath( $dir_name, $this->id ) : '';
+        } else {
+            $is_template = FALSE;
+            $name_prefix = $id_prefix = $this->block_name;
+            $location = ecb2_FileUtils::ECB2ImagesUrl( $this->block_name, $this->id, '', $this->options['dir'] );
+            $dir = ecb2_FileUtils::ECB2ImagesPath( $this->block_name, $this->id, '', $this->options['dir'] );
+        }
+        if ( $this->options['auto_add_delete'] && $dir ) {
             ecb2_FileUtils::autoAddDirImages( $this->values, $dir, $this->options['thumbnail_width'], $this->options['thumbnail_height']);
         }
         $resize_method = ($this->options['resize_method']=='crop') ? 'crop' : ''; // default: 'contain'
@@ -146,6 +271,11 @@ class ecb2fd_gallery extends ecb2_FieldDefBase
         $smarty = \CmsApp::get_instance()->GetSmarty();
         $tpl = $smarty->CreateTemplate( 'string:'.$this->get_template(), null, null, $smarty );
         $tpl->assign( 'block_name', $this->block_name );
+        $tpl->assign( 'name_prefix', $name_prefix );
+        $tpl->assign( 'id_prefix', $id_prefix );
+        $tpl->assign( 'is_sub_field', $this->is_sub_field );
+        $tpl->assign( 'is_template', $is_template );
+        $tpl->assign( 'gallery_key', $this->gallery_key );
         $tpl->assign( 'values', $this->values );
         $tpl->assign( 'json_filenames', $json_filenames );
         $tpl->assign( 'sub_fields', $this->sub_fields );

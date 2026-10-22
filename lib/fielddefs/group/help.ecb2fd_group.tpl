@@ -56,6 +56,8 @@ sub4_field=radio sub4_name=test7radio sub4_label='radio test' sub4_values='Apple
 
 <p>A <code>sortablelist</code> subfield is an object whose <code>values</code> property contains the selected items in order, for example <code>{literal}{$sub_field->sizes->values}{/literal}</code>.</p>
 
+<p>A <code>gallery</code> subfield is an object whose <code>sub_fields</code> property lists the images, each with <code>filename</code> and <code>file_location</code>, for example <code>{literal}{foreach $sub_field->photos->sub_fields as $img}{$img->file_location}{$img->filename}{/foreach}{/literal}</code>. Inside a group, a gallery handles images only (its own sub fields and the <code>dir</code> parameter are ignored). Each group row has its own image folder, and copying a row copies its images.</p>
+
 <p>Notes & tips:</p>
 <ol>
     <li>change the order of the subX_ parameters to change the order of the fields in the admin page.</li>
