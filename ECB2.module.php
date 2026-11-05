@@ -56,6 +56,14 @@ class ECB2 extends CMSModule {
         'admin_module_link',
         'admin_text'
     ];
+
+    /**
+     * External field types registered by other modules.
+     * Structure: ['field_name' => ['class_file' => '/path/to/class.ecb2fd_field_name.php', 'originator' => 'ModuleName']]
+     * @var array
+     */
+    private static $_external_field_types = [];
+
     const FIRST_ADMIN_ONLY_FIELD = 'admin_fieldset_start';    // only to trigger help subheading
     const FIELD_ALIASES = [
         'input' => 'textinput',
@@ -95,6 +103,119 @@ class ECB2 extends CMSModule {
     const INPUT_TEMPLATE_PREFIX = 'input.';
     const HELP_TEMPLATE_PREFIX = 'help.';
     const DEMO_BLOCK_PREFIX = 'demo_';
+
+    /**
+     * Register an external field type from another module.
+     *
+     * Call this from your module's InitializeAdmin() or InitializeFrontend():
+     *   ECB2::RegisterFieldType('s3_file_picker', '/full/path/to/class.ecb2fd_s3_file_picker.php', 'AWSS3');
+     *
+     * @param string $field_type   The field type name (used in content_module field= param)
+     * @param string $class_file   Full filesystem path to the class file
+     * @param string $originator   Module name that provides this field type
+     */
+    public static function RegisterFieldType($field_type, $class_file, $originator = '')
+    {
+        self::$_external_field_types[$field_type] = [
+            'class_file'  => $class_file,
+            'originator'  => $originator,
+        ];
+    }
+
+    /**
+     * Get all available field types (built-in + external).
+     * External types are inserted before admin-only fields.
+     * Scans installed modules for ECB2 field type registrations on first call.
+     *
+     * @return array
+     */
+    public function GetAllFieldTypes()
+    {
+        static $scanned = false;
+        if (!$scanned) {
+            $scanned = true;
+            $this->_collectExternalFieldTypes();
+        }
+
+        if (empty(self::$_external_field_types)) {
+            return self::FIELD_TYPES;
+        }
+
+        // Insert external types before admin-only fields
+        $pos = array_search(self::FIRST_ADMIN_ONLY_FIELD, self::FIELD_TYPES);
+        if ($pos === false) {
+            return array_merge(self::FIELD_TYPES, array_keys(self::$_external_field_types));
+        }
+
+        $before = array_slice(self::FIELD_TYPES, 0, $pos);
+        $after = array_slice(self::FIELD_TYPES, $pos);
+        return array_merge($before, array_keys(self::$_external_field_types), $after);
+    }
+
+    /**
+     * Check if a field type is valid (built-in or registered external).
+     *
+     * @param string $field_type
+     * @return bool
+     */
+    public function IsValidFieldType($field_type)
+    {
+        if (in_array($field_type, self::FIELD_TYPES)) return true;
+
+        // Trigger external type collection if not yet done
+        static $scanned = false;
+        if (!$scanned) {
+            $scanned = true;
+            $this->_collectExternalFieldTypes();
+        }
+
+        return isset(self::$_external_field_types[$field_type]);
+    }
+
+    /**
+     * Get registered external field types.
+     *
+     * @return array
+     */
+    public static function GetExternalFieldTypes()
+    {
+        return self::$_external_field_types;
+    }
+
+    /**
+     * Scan installed modules for ECB2 field type providers.
+     *
+     * Modules that want to provide ECB2 field types should implement:
+     *   public function GetECB2FieldTypes() : array
+     *
+     * Returns an array of:
+     *   ['field_name' => '/full/path/to/class.ecb2fd_field_name.php', ...]
+     */
+    private function _collectExternalFieldTypes()
+    {
+        $modops = \ModuleOperations::get_instance();
+        $installed = $modops->GetInstalledModules();
+
+        foreach ($installed as $mod_name) {
+            if ($mod_name === 'ECB2') continue;
+
+            $mod = \cms_utils::get_module($mod_name);
+            if (!$mod || !method_exists($mod, 'GetECB2FieldTypes')) continue;
+
+            $types = $mod->GetECB2FieldTypes();
+            if (!is_array($types)) continue;
+
+            foreach ($types as $field_type => $class_file) {
+                if (!isset(self::$_external_field_types[$field_type]) && is_file($class_file)) {
+                    self::$_external_field_types[$field_type] = [
+                        'class_file'  => $class_file,
+                        'originator'  => $mod_name,
+                    ];
+                }
+            }
+        }
+    }
+
 
     public function GetName() { return 'ECB2';  }
     public function GetFriendlyName() { return $this->Lang('friendlyname'); }
@@ -142,16 +263,24 @@ class ECB2 extends CMSModule {
 
 
     /**
-     *  Internal autoloader
+     *  Internal autoloader - also checks external field type registrations
      */
     private function _autoloader($classname)
     {
         $parts = explode('\\', $classname);
         $classname = end($parts);
         $fielddef_dir = str_replace(self::FIELD_DEF_PREFIX, '', $classname);
+
+        // Check ECB2's own fielddefs directory
         $fn = cms_join_path( $this->GetModulePath(), 'lib', 'fielddefs', $fielddef_dir,
             self::FIELD_DEF_CLASS_PREFIX.$classname.'.php' );
-        if (file_exists($fn)) require_once($fn);
+        if (file_exists($fn)) { require_once($fn); return; }
+
+        // Check registered external field types
+        if (isset(self::$_external_field_types[$fielddef_dir])) {
+            $fn = self::$_external_field_types[$fielddef_dir]['class_file'];
+            if (file_exists($fn)) { require_once($fn); return; }
+        }
     }
 
 
@@ -180,10 +309,11 @@ class ECB2 extends CMSModule {
 
         $tpl = $smarty->CreateTemplate( $this->GetTemplateResource('admin_content_blocks.tpl'), null, null, $smarty );
         $tpl->assign('mod', $this);
-        $tpl->assign('field_types', self::FIELD_TYPES);
+        $all_field_types = $this->GetAllFieldTypes();
+        $tpl->assign('field_types', $all_field_types);
         $tpl->assign('first_admin_only_field', self::FIRST_ADMIN_ONLY_FIELD);
         $field_help = [];
-        foreach(self::FIELD_TYPES as $field_type) {
+        foreach($all_field_types as $field_type) {
             $type = self::FIELD_DEF_PREFIX.$field_type;
             if ( class_exists($type) ) {    // stops errors with old field types on upgrade
                 $ecb2 = new $type($this, $this::DEMO_BLOCK_PREFIX.$field_type, NULL, ['field' => $field_type], TRUE);
@@ -260,7 +390,7 @@ class ECB2 extends CMSModule {
         $this->get_admin_css_js( TRUE );   // output css & js - but only once per page
 
         $this->HandleFieldAliases($params);       
-        if ( !in_array($params["field"], self::FIELD_TYPES ) ) {
+        if ( !$this->IsValidFieldType($params["field"]) ) {
             return $this->error_msg( $this->Lang('field_error', $blockName) );
         }     
 
@@ -445,7 +575,7 @@ class ECB2 extends CMSModule {
      */
     private function HandleFieldAliases( &$params ) 
     {
-        if ( !in_array($params['field'], self::FIELD_TYPES) && 
+        if ( !$this->IsValidFieldType($params['field']) && 
               array_key_exists($params['field'], self::FIELD_ALIASES) ) {
             $params['field_alias_used'] = $params['field'];
             $params['field'] = self::FIELD_ALIASES[$params['field']];
@@ -559,7 +689,7 @@ class ECB2 extends CMSModule {
                             // JSON is valid and not just a simple string 
                             $blockParams = $block->extra['params'];
                             $this->HandleFieldAliases($blockParams);       
-                            if ( in_array($blockParams["field"], self::FIELD_TYPES ) ) {     
+                            if ( $this->IsValidFieldType($blockParams["field"]) ) {     
                                 $type = self::FIELD_DEF_PREFIX.$blockParams["field"];
                                 $ecb2 = new $type($this, $blockName, $value, $blockParams, FALSE, $one);
 

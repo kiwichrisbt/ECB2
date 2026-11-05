@@ -222,7 +222,7 @@ abstract class ecb2_FieldDefBase
         foreach ($sub_params as $sub_field_params) {
             // handle Sub Field Aliases
             if ( isset($sub_field_params['field']) && 
-                 !in_array($sub_field_params['field'], $this->mod::FIELD_TYPES) && 
+                 !in_array($sub_field_params['field'], $this->mod->GetAllFieldTypes()) && 
                  array_key_exists($sub_field_params['field'], $this->mod::FIELD_ALIASES) ) 
             {
                 $sub_field_params['field_alias_used'] = $sub_field_params['field'];
