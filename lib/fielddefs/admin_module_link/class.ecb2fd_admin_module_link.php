@@ -4,9 +4,11 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
+
+namespace ECB2;
 
 class ecb2fd_admin_module_link extends ecb2_FieldDefBase 
 {
@@ -66,7 +68,7 @@ class ecb2fd_admin_module_link extends ecb2_FieldDefBase
 
         $target_mod = '';
         if ( $this->options['mod'] ) {
-            $target_mod = cms_utils::get_module( $this->options['mod'] );
+            $target_mod = \cms_utils::get_module( $this->options['mod'] );
             if ( !is_object($target_mod) ) {
                 $this->error = $this->mod->Lang('module_error', $this->options['mod']);
                 return $this->mod->error_msg($this->error);

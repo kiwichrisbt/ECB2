@@ -2,8 +2,10 @@
 
 
 <div class="clear"></div>
-
 {tab_header name='ecb' label=$mod->Lang('extended_content_blocks')}
+
+{tab_header name='fields' label=$mod->Lang('field_types')}
+
 {if !$help_only}
     {tab_header name='options' label=$mod->Lang('options')}
 {/if}

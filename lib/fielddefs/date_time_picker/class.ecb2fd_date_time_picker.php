@@ -4,9 +4,11 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
+
+namespace ECB2;
 
 class ecb2fd_date_time_picker extends ecb2_FieldDefBase 
 {
@@ -39,7 +41,7 @@ class ecb2fd_date_time_picker extends ecb2_FieldDefBase
             'size'              => ['default' => 20,        'filter' => FILTER_VALIDATE_INT],
             'label'             => ['default' => '',        'filter' => self::ECB2_SANITIZE_STRING],
             'max_length'        => ['default' => 20,        'filter' => FILTER_VALIDATE_INT],
-            'date_format'       => ['default' => 'yy-mm-dd','filter' => self::ECB2_SANITIZE_STRING],
+            'date_format'       => ['default' => '',        'filter' => self::ECB2_SANITIZE_STRING],
             'time_format'       => ['default' => 'HH:mm',   'filter' => self::ECB2_SANITIZE_STRING],
             'time'              => ['default' => '',        'filter' => self::ECB2_SANITIZE_STRING],
             'change_month'      => ['default' => FALSE,     'filter' => FILTER_VALIDATE_BOOLEAN],
@@ -83,6 +85,7 @@ class ecb2fd_date_time_picker extends ecb2_FieldDefBase
         $tpl->assign('value', $this->value );
         $tpl->assign('size', $this->options['size']);
         $tpl->assign('max_length', $this->options['max_length']);
+        $tpl->assign('date_format', $this->options['date_format']);
         $tpl->assign('time_format', $this->options['time_format']);
         $tpl->assign('change_month', $this->options['change_month']);
         $tpl->assign('change_year', $this->options['change_year']);

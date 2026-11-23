@@ -4,9 +4,11 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
+
+namespace ECB2;
 
 class ecb2fd_admin_text extends ecb2_FieldDefBase 
 {
@@ -37,14 +39,28 @@ class ecb2fd_admin_text extends ecb2_FieldDefBase
     public function set_field_parameters() 
     {
         $this->default_parameters = [
-            'text'          => ['default' => '',    'filter' => FILTER_DEFAULT],
-            'admin_groups'  => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
-            'description'   => ['default' => '',    'filter' => FILTER_DEFAULT]
+            'text'              => ['default' => '',    'filter' => FILTER_DEFAULT],
+            'color'             => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
+            'background_color'  => ['default' => '', 'filter' => self::ECB2_SANITIZE_STRING],
+            'admin_groups'      => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
+            'description'       => ['default' => '',    'filter' => FILTER_DEFAULT]
         ];
         // $this->parameter_aliases = [ 'alias' => 'parameter' ];
         $this->restrict_params = FALSE;    // default: true  - to enable text to include html
 
     }
+
+
+    /**
+     *  @return string the colour if it is a hex, named, rgb(a) or hsl(a) colour - otherwise empty string
+     */
+    private function valid_css_color($color)
+    {
+        $color = trim($color);
+        if ( preg_match('/\A(?:#[0-9a-f]{3,8}|[a-z]+|(?:rgb|hsl)a?\([0-9.,%\s\/]+\))\z/i', $color) ) return $color;
+        return '';
+    }
+
 
 
     /**
@@ -61,6 +77,8 @@ class ecb2fd_admin_text extends ecb2_FieldDefBase
         $tpl = $smarty->CreateTemplate( 'string:'.$this->get_template(), null, null, $smarty );
         $tpl->assign('block_name', $this->block_name );
         $tpl->assign('text', $this->options['text'] );
+        $tpl->assign('color', $this->valid_css_color($this->options['color']) );
+        $tpl->assign('background_color', $this->valid_css_color($this->options['background_color']) );
         $tpl->assign('description', $this->options['description'] );
         return $tpl->fetch();
    

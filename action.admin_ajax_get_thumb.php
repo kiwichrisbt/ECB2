@@ -4,7 +4,7 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
 
@@ -24,7 +24,7 @@ if ( empty($thumbnail_height) ) $thumbnail_height = 0;
 $config = cmsms()->GetConfig();
 $img_src = cms_join_path( $config['uploads_path'], $top_dir, $file_name  );
 
-$thumbnail_url = ecb2_FileUtils::get_thumbnail_url($img_src, $thumbnail_width, $thumbnail_height);
+$thumbnail_url = \ECB2\ecb2_FileUtils::get_thumbnail_url($img_src, $thumbnail_width, $thumbnail_height);
 
 echo $thumbnail_url;    // '' if no thumbnail
 

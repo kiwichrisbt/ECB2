@@ -4,9 +4,11 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
+
+namespace ECB2;
 
 class ecb2fd_gallery_picker extends ecb2_FieldDefBase 
 {
@@ -58,13 +60,13 @@ class ecb2fd_gallery_picker extends ecb2_FieldDefBase
         }
 
         $dir = $this->options['dir'].'/';    // default dir (needs '/' at end)
-        $GalleryModule = cms_utils::get_module('Gallery');
+        $GalleryModule = \cms_utils::get_module('Gallery');
         if (!is_object($GalleryModule)) {
             $this->error = $this->mod->Lang('gallery_module_error');
             return $this->mod->error_msg($this->error);
         }
 
-        $galleries = Gallery_utils::GetGalleries();
+        $galleries = \Gallery_utils::GetGalleries();
         $galleryArray = array('' => $this->mod->Lang('none_selected') );
 
         foreach ($galleries as $gallery) {

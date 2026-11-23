@@ -16,7 +16,8 @@
     <li>show_time (optional) - (alias: '<b>time</b>') add time picker - default: true</li>
     <li>date_only (optional) - only show date picker - default: false</li>
     <li>time_only (optional) - only show time picker - default: false</li>
-    <li>date_format (optional) - default: 'yy-mm-dd'</li>
+    <li>date_format (optional) - jQuery UI date format, https://api.jqueryui.com/datepicker/#option-dateFormat <br>
+    e.g. 'dd.mm.yy' (note: lowercase 'yy' = 4 digit year). Default: not set, so the jQuery UI default 'mm/dd/yy' is used. Changing date_format will not changed previously saved values.</li>
     <li>time_format (optional) - default: 'HH::ss'</li>
     <li>change_month (optional) - whether the month should be rendered as a dropdown instead of text - default: false.</li>
     <li>change_year (optional) - whether the year should be rendered as a dropdown instead of text. Use the year_range option to control which years are made available for selection - default: false</li>

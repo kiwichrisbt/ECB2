@@ -20,7 +20,9 @@
             </div>
         {foreach $sub_fields as $field_def}
             <div class="sub-field sub-field-{$field_def->get_type()}">
-                <label class="sub_field_label">{$field_def->get_field_label()}</label>
+                {if $field_def->is_field_label_visible()}
+                    <label class="sub_field_label">{$field_def->get_field_label()}</label>
+                {/if}
                 {$field_def->get_content_block_input()}
             </div>
         {/foreach}
@@ -38,7 +40,9 @@
 
         {foreach $sub_fields as $field_def}
             <div class="sub-field row{$fields@iteration} col{$field_def@iteration} sub-field-{$field_def->get_type()}">
-                <label class="sub_field_label">{$field_def->get_field_label()}:</label>
+                {if $field_def->is_field_label_visible()}
+                    <label class="sub_field_label">{$field_def->get_field_label()}:</label>
+                {/if}
                 {$field_def->set_sub_field_value($fields, $row)}
                 {$field_def->get_content_block_input()}
             </div>
@@ -62,7 +66,9 @@
                     <th class="left-panel"></th>
                 {foreach $sub_fields as $field_def}
                     <th class="sub-field-heading sub-field-heading-{$field_def->get_type()} col{$field_def@iteration}" data-heading-for=".col{$field_def@iteration}">
-                        {$field_def->get_field_label()}
+                        {if $field_def->is_field_label_visible()}
+                            {$field_def->get_field_label()}
+                        {/if}
                     </th>
                 {/foreach}
                     <th class="right-panel"></th>
@@ -113,4 +119,3 @@
     <div class="ecb_repeater_footer">
         <button id="{$block_name}-repeater-add" class="ecb2-repeater-add ecb2-btn ecb2-btn-default" data-repeater="#{$block_name}-repeater" title="{$mod->Lang('add_line')}" role="button" {if !empty($max_blocks) && $values|count>=$max_blocks} disabled aria-disabled="true"{else}aria-disabled="false"{/if}><span class="ecb2-icon-plus"></span>&nbsp;&nbsp;{$mod->Lang('add_item')}</button>
     </div>
-

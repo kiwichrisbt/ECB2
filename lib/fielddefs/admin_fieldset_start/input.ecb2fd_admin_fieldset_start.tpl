@@ -5,9 +5,9 @@
     </p>
         </div>
 {/if}
-            <fieldset name="{$block_name}">
+            <fieldset name="{$block_name}"{if $collapsible} class="ecb2-fieldset-collapsible"{/if}>
         {if $legend}
-            <legend>{$legend}</legend>
+            <legend{if $collapsible} tabindex="0" role="button" aria-expanded="true"{/if}>{$legend}</legend>
         {/if}
 {if !empty($description)}
             {$description}<br>

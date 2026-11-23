@@ -4,8 +4,10 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
+
+namespace ECB2;
 
 class ecb2Blocks 
 {
@@ -20,7 +22,7 @@ class ecb2Blocks
     public function create_database()
     {
         //  create module_ecb2_blocks table
-        $db = CmsApp::get_instance()->GetDb();
+        $db = \CmsApp::get_instance()->GetDb();
         $dict = NewDataDictionary($db);
         $taboptarray = array( 'mysql' => 'TYPE=MyISAM' );
         $fields = "
@@ -42,7 +44,7 @@ class ecb2Blocks
      */
     public function remove_database()
     {
-        $db = CmsApp::get_instance()->GetDb();
+        $db = \CmsApp::get_instance()->GetDb();
         $dict = NewDataDictionary( $db );
         $sqlarray = $dict->DropTableSQL( CMS_DB_PREFIX.'module_ecb2_blocks');
         $dict->ExecuteSQLArray($sqlarray);

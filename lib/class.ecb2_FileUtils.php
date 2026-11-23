@@ -4,8 +4,10 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
+
+namespace ECB2;
 
 class ecb2_FileUtils 
 {
@@ -162,14 +164,43 @@ class ecb2_FileUtils
 
 
     /**
+     *  slugify an uploaded filename so urls never need %20: lowercased, and any run of spaces
+     *  (with adjacent hyphens/underscores) becomes a single hyphen, e.g. 'My  Photo 1.JPG' => 'my-photo-1.jpg'
+     *  @return string the sanitised filename
+     */
+    public static function sanitise_upload_filename( $filename )
+    {
+        $filename = strtolower( basename($filename) );
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $name = pathinfo($filename, PATHINFO_FILENAME);
+        $name = preg_replace('/[\s_-]*\s[\s_-]*/', '-', $name);   // any run containing a space => one hyphen
+        $name = trim($name, '-');
+        return ($ext === '') ? $name : $name.'.'.$ext;
+    }
+
+
+
+    /**
      *  upload file into ECB2ImagesTempPath
-    *      allowed types: jpg, jpeg, png, gif, webp, mp3, mp4
+     *      allowed types: jpg, jpeg, png, gif, webp, mp3, mp4
      *
      *  @param string $original_filename - original filename of uploaded file
      *  @param string $tmp_filename - temp filename of the file on the server
      *  @return boolean $success
      */
-    public static function ECB2MoveUploadedFile( $original_filename, $tmp_filename  ) 
+    /**
+     *  @return string filename with a short random suffix, e.g. 'photo.jpg' => 'photo-3fa91.jpg'
+     */
+    public static function add_filename_suffix( $filename )
+    {
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $name = pathinfo($filename, PATHINFO_FILENAME);
+        return $name.'-'.substr(bin2hex(random_bytes(3)), 0, 5).( $ext === '' ? '' : '.'.$ext );
+    }
+
+
+
+    public static function ECB2MoveUploadedFile( $original_filename, $tmp_filename, $target_filename=NULL ) 
     {
            if ( !is_string($original_filename) || $original_filename === '' ||
                !is_string($tmp_filename) || $tmp_filename === '' ) return false;
@@ -194,12 +225,15 @@ class ecb2_FileUtils
            $extension = strtolower(pathinfo($original_filename, PATHINFO_EXTENSION));
            if ( !isset($allowed_types[$extension]) ) return false;
 
+        $target = $target_filename ? $target_filename : self::sanitise_upload_filename($original_filename);
+        if ( basename($target) !== $target || strtolower(pathinfo($target, PATHINFO_EXTENSION)) !== $extension ) return false;
+
         if ( $extension === 'svg' ) {
             // svg can contain scripts - only accept if it can be sanitised (file is rewritten in place)
             if ( filesize($tmp_filename) > self::SVG_MAX_BYTES || !self::sanitize_svg_file($tmp_filename) ) return false;
         } elseif ( in_array($extension, ['mp3', 'mp4'], true) ) {
             if ( !class_exists('finfo') ) return false;
-            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
             $detected_type = $finfo->file($tmp_filename);
             if ( !in_array($detected_type, $allowed_types[$extension], true) ) return false;
         } else {
@@ -209,7 +243,7 @@ class ecb2_FileUtils
         }
 
         $ecb2_images_path = self::ECB2ImagesTempPath();
-        $success = cms_move_uploaded_file( $tmp_filename, $ecb2_images_path.$original_filename );
+        $success = cms_move_uploaded_file( $tmp_filename, $ecb2_images_path.$target );
         return $success;
 
     }
@@ -292,7 +326,7 @@ class ecb2_FileUtils
         foreach ( glob( $dir.'*.*' ) as $filename) {
             $tmp_filename = basename($filename);
             if ( !self::isECB2Thumb($tmp_filename) && !in_array($tmp_filename, $all_filenames) ) {
-                $new_item = new stdClass();
+                $new_item = new \stdClass();
                 $new_item->filename = $tmp_filename;
                 $values[] = $new_item;
                 self::create_thumbnail($filename, $thumbnail_width, $thumbnail_height);
@@ -395,7 +429,7 @@ class ecb2_FileUtils
         $thumb_width = (int) $thumb_width;
         $thumb_height = (int) $thumb_height;
         if ( $thumb_width==0 && $thumb_height==0 ) { 
-            $module = cms_utils::get_module( 'ECB2' );
+            $module = \cms_utils::get_module( 'ECB2' );
             $ecb2_thumb_width = $module->GetPreference('thumbnailWidth', '');
             $ecb2_thumb_height = $module->GetPreference('thumbnailHeight', '');
             if ( !empty($ecb2_thumb_width) || !empty($ecb2_thumb_height) ) { // use module preferences
@@ -403,8 +437,8 @@ class ecb2_FileUtils
                 $thumb_height = (int)$ecb2_thumb_height;
 
             } else {    // use CMSMS preferences
-                $thumb_width = (int)cms_siteprefs::get('thumbnail_width',96);
-                $thumb_height = (int)cms_siteprefs::get('thumbnail_height',96);
+                $thumb_width = (int)\cms_siteprefs::get('thumbnail_width',96);
+                $thumb_height = (int)\cms_siteprefs::get('thumbnail_height',96);
             }
         }
     }
@@ -540,7 +574,7 @@ class ecb2_FileUtils
         if ( !is_string($svg) || $svg === '' || stripos($svg, '<!ENTITY') !== FALSE ) return FALSE;
 
         $prev = libxml_use_internal_errors(TRUE);
-        $doc = new DOMDocument();
+        $doc = new \DOMDocument();
         $loaded = $doc->loadXML( $svg, LIBXML_NONET | LIBXML_NOBLANKS );
         libxml_clear_errors();
         libxml_use_internal_errors($prev);
@@ -556,17 +590,17 @@ class ecb2_FileUtils
     /**
      *  recursively removes unsafe elements, attributes & style content from an svg element
      */
-    protected static function sanitize_svg_node( DOMElement $el )
+    protected static function sanitize_svg_node( \DOMElement $el )
     {
         foreach ( iterator_to_array($el->childNodes) as $child ) {
-            if ( $child instanceof DOMElement ) {
+            if ( $child instanceof \DOMElement ) {
                 if ( !in_array(strtolower($child->localName), self::SVG_ELEMENTS, TRUE) ||
                      ($child->namespaceURI !== NULL && $child->namespaceURI !== 'http://www.w3.org/2000/svg') ) {
                     $el->removeChild($child);
                 } else {
                     self::sanitize_svg_node( $child );
                 }
-            } elseif ( $child instanceof DOMText || $child instanceof DOMCdataSection ) {
+            } elseif ( $child instanceof \DOMText || $child instanceof \DOMCdataSection ) {
                 if ( strtolower($el->localName) === 'style' &&
                      preg_match('/@import|expression\s*\(|javascript:|url\s*\(\s*[\'"]?\s*(?!#)/i', $child->nodeValue) ) {
                     $el->removeChild($child);

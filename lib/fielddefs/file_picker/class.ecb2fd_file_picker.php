@@ -4,8 +4,10 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
+
+namespace ECB2;
 
 use \FilePicker\TemporaryProfileStorage;
 
@@ -69,7 +71,10 @@ class ecb2fd_file_picker extends ecb2_FieldDefBase
     
         $thumbnail_url = '';
         $ajax_url = '';
-        $FPmod = cms_utils::get_module('FilePicker');
+        $FPmod = \cms_utils::get_module('FilePicker');
+        if (!$FPmod) {
+            return $this->mod->error_msg( $this->mod->Lang('error_no_filepicker') );
+        }
         $FPprofile = $FPmod->get_profile_or_default( $this->options['profile'] );
         if ( $this->options['preview'] ) {  // get thumbnail
             $config = cmsms()->GetConfig();
@@ -104,6 +109,15 @@ class ecb2fd_file_picker extends ecb2_FieldDefBase
                 $this->block_name.']' );
             $tpl->assign( 'subFieldId', $this->sub_parent_block.'_r_'.$this->sub_row_number.'_'.
                 $this->block_name );
+            // same top & type overrides as the {cms_filepicker} tag applies to existing rows
+            $override = [];
+            $top = $this->options['top'];
+            if ( $top ) {
+                if ( !startswith($top, '/') ) $top = cmsms()->GetConfig()['uploads_path'].'/'.$top;
+                if ( startswith($top, CMS_ROOT_PATH) ) $override['top'] = $top;
+            }
+            if ( $this->options['filetype'] ) $override['type'] = $this->options['filetype'];
+            if ( count($override) ) $FPprofile = $FPprofile->overrideWith( $override );
             $profile_sig = TemporaryProfileStorage::set( $FPprofile );
             $tpl->assign( 'profile_sig', $profile_sig );
             $tpl->assign( 'lang_clear', $FPmod->Lang('clear') );

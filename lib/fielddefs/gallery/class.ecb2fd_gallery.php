@@ -4,9 +4,11 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
+
+namespace ECB2;
 
 class ecb2fd_gallery extends ecb2_FieldDefBase 
 {
@@ -271,6 +273,7 @@ class ecb2fd_gallery extends ecb2_FieldDefBase
         $smarty = \CmsApp::get_instance()->GetSmarty();
         $tpl = $smarty->CreateTemplate( 'string:'.$this->get_template(), null, null, $smarty );
         $tpl->assign( 'block_name', $this->block_name );
+        $tpl->assign( 'remove_confirm', $this->mod->Lang('remove_image_confirm') );
         $tpl->assign( 'name_prefix', $name_prefix );
         $tpl->assign( 'id_prefix', $id_prefix );
         $tpl->assign( 'is_sub_field', $this->is_sub_field );

@@ -4,11 +4,11 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
 
-if (!isset($gCms)) exit;
+if ( !defined('CMS_VERSION') ) exit;
 
 define('MANAGE_PERM', 'manage_ecb2');   // duplicated from ECB2.module.php
 
@@ -57,7 +57,7 @@ if ( version_compare($oldversion, '2.0') < 0 ) {
     ];
     foreach ($filesToRemove as $delFile) @unlink($module_path.$delFile);
 
-    ecb2_FileUtils::CreateImagesDir();
+    \ECB2\ecb2_FileUtils::CreateImagesDir();
 }
 
 if ( version_compare($oldversion, '1.99.3') < 0 ) {
@@ -66,7 +66,7 @@ if ( version_compare($oldversion, '1.99.3') < 0 ) {
 
 if ( version_compare($oldversion, '1.99.5') < 0 ) {
     //  create module_ecb2_blocks table
-    $blocks_table = new ecb2Blocks();
+    $blocks_table = new \ECB2\ecb2Blocks();
     $blocks_table->create_database();
 }
 
@@ -83,3 +83,15 @@ if ( version_compare($oldversion, '2.3') <= 0 ) { // if v2.3 or lower
         @unlink($module_path.$delFile);
     }
 }
+
+if ( version_compare($oldversion, '2.5.0') <= 0 ) { // if v2.5 or lower
+    $filesToRemove = [
+        '/templates/README.md',
+        '/lang/LICENCE.txt',
+    ];
+    foreach ($filesToRemove as $delFile) {
+        @unlink($module_path.$delFile);
+    }
+}
+
+

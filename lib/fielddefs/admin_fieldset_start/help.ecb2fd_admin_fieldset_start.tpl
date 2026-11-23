@@ -6,6 +6,10 @@
     some admin fields can go in here :)
     </fieldset>
 
+{$fielddef->get_demo_input(['legend'=>'A collapsible fieldset - click the legend', 'collapsible'=>1])}
+    some admin fields can go in here :)
+    </fieldset>
+
 <pre>{literal}{content_module module=ECB2 field=admin_fieldset_start block=test label='15: admin_fieldset_start'}{/literal}</pre>
 
 <p>TIP: set label='&amp;nbsp;' to not show the field label.</p>
@@ -15,6 +19,7 @@
     <li>field (required) - 'admin_fieldset_start', alias: '<b>fieldset_start</b>'</li>
     <li>block (required) - the name of the content block</li>
     <li>legend (optional) - text to show as fieldset legend - default: ''</li>
+    <li>collapsible (optional) - click the legend to show/hide the fieldset contents (the legend is used as the toggle, if no legend is set the block name is shown) - default: false</li>
     <li>description (optional) - adds additional text explanation for editor</li>
     <li>admin_groups (optional) - a comma separated list of admin groups that can view & edit this field</li>
 </ul>

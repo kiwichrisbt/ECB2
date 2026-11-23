@@ -4,7 +4,7 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 # A fork of module: Extended Content Blocks (ECB)
 # Original Author: Zdeno Kuzmany (zdeno@kuzmany.biz) / kuzmany.biz  / twitter.com/kuzmany
@@ -26,7 +26,7 @@
 
 class ECB2 extends CMSModule {
 
-    const MODULE_VERSION = '2.5.0-beta.5';
+    const MODULE_VERSION = '2.5.0-beta6';
     const DEVELOPMENT_MODE = false;          // set to false for production releases
     const MANAGE_PERM = 'manage_ecb2';      // duplicated in upgrade action
 
@@ -75,9 +75,8 @@ class ECB2 extends CMSModule {
         'text' => 'admin_text',
         'link' => 'admin_link',
         'module_link' => 'admin_module_link',
-        'image' => 'admin_image',
         'input_repeater' => 'textinput',
-        'image' => 'gallery'
+        'image' => 'gallery',
     ];
     const OUTPUT_FORMAT_DEFAULT = 'string';
     const OUTPUT_FORMAT = [ // 'string' (default), 'array','array_or_string','object','string_separated'
@@ -90,6 +89,7 @@ class ECB2 extends CMSModule {
         'input_repeater' => 'string_separated'
     ];
 
+    const FIELD_DEF_NAMESPACE = 'ECB2\\';
     const FIELD_DEF_PREFIX = 'ecb2fd_';
     const FIELD_DEF_CLASS_PREFIX = 'class.';
     const INPUT_TEMPLATE_PREFIX = 'input.';
@@ -103,10 +103,14 @@ class ECB2 extends CMSModule {
     // public function LazyLoadFrontend() { return true; }         // is probably required for most pages
     public function GetAuthor() { return 'Chris Taylor'; }
     public function GetAuthorEmail() { return 'chris@binnovative.co.uk'; }
-    public function GetChangeLog() { return $this->ProcessTemplate('admin_changelog.tpl'); }
+    public function GetChangeLog() { return @file_get_contents(__DIR__.'/docs/changelog.inc'); }
     public function GetAdminDescription() { return $this->Lang('module_description'); }
     public function GetHelp() { return $this->get_admin(TRUE); }
-    public function HasAdmin() { return true;}
+    public function IsPluginModule() { return false; }
+    public function HasAdmin() { return true; }
+    public function GetDependencies() { return []; } 
+        // several modules (eg FilePicker, Gallery) may be required for full functionality, but ECB2 outputs 
+        // an error message if they are not available.
     public function VisibleToAdminUser() { return ( $this->CheckPermission(self::MANAGE_PERM) ); }
     public function GetHeaderHTML() { return $this->get_admin_css_js(); }
     public function InstallPostMessage() { return $this->Lang('postinstall');}
@@ -172,6 +176,12 @@ class ECB2 extends CMSModule {
         $this->get_admin_css_js( TRUE );
         $output = '';
         $smarty = \CmsApp::get_instance()->GetSmarty();
+        $readme_contents = file_get_contents( $this->GetModulePath().'/README.md' );
+        $ops = ModuleOperations::get_instance();
+        $is_active_module = $ops->IsModuleActive('ECB2');
+        if( !$is_active_module  ) {   // e.g. ModuleManager help clicked, but ECB2 not installed
+            return $readme_contents;
+        }
 
         $tpl = $smarty->CreateTemplate( $this->GetTemplateResource('admin_default.tpl'), null, null, $smarty );
         $tpl->assign('mod', $this);
@@ -182,9 +192,10 @@ class ECB2 extends CMSModule {
         $tpl->assign('mod', $this);
         $tpl->assign('field_types', self::FIELD_TYPES);
         $tpl->assign('first_admin_only_field', self::FIRST_ADMIN_ONLY_FIELD);
+        $tpl->assign('readme_contents', $readme_contents);
         $field_help = [];
         foreach(self::FIELD_TYPES as $field_type) {
-            $type = self::FIELD_DEF_PREFIX.$field_type;
+            $type = self::FIELD_DEF_NAMESPACE.self::FIELD_DEF_PREFIX.$field_type;
             if ( class_exists($type) ) {    // stops errors with old field types on upgrade
                 $ecb2 = new $type($this, $this::DEMO_BLOCK_PREFIX.$field_type, NULL, ['field' => $field_type], TRUE);
                 $field_help[$field_type] = $ecb2->get_field_help();
@@ -207,6 +218,8 @@ class ECB2 extends CMSModule {
         $smarty = \CmsApp::get_instance()->GetSmarty();
         $tpl = $smarty->CreateTemplate( $this->GetTemplateResource('admin_about.tpl'), null, null, $smarty );
         $tpl->assign('mod', $this);
+        // drop the changelog's own <style> block so it doesn't restyle the rest of the page
+        $tpl->assign('changelog', preg_replace('/<style\b.*?<\/style>/is', '', (string)$this->GetChangeLog()));
         $output .= $tpl->fetch();
 
         return $output;
@@ -264,7 +277,7 @@ class ECB2 extends CMSModule {
             return $this->error_msg( $this->Lang('field_error', $blockName) );
         }     
 
-        $type = self::FIELD_DEF_PREFIX.$params["field"];
+        $type = self::FIELD_DEF_NAMESPACE.self::FIELD_DEF_PREFIX.$params["field"];
         $ecb2 = new $type($this, $blockName, $value, $params, $adding, $content_obj->Id());
 
         $ecb2_cb = $ecb2->get_content_block_input();
@@ -304,7 +317,7 @@ class ECB2 extends CMSModule {
         $value = '';    // just use dummy value here, pass input array into get_content_block_value()
         $adding = ($id == 0); 
         $this->HandleFieldAliases($blockParams); 
-        $type = self::FIELD_DEF_PREFIX.$blockParams['field'];
+        $type = self::FIELD_DEF_NAMESPACE.self::FIELD_DEF_PREFIX.$blockParams['field'];
         $ecb2 = new $type($this, $blockName, $value, $blockParams, $adding, $id);
 
         $ecb2_value = $ecb2->get_content_block_value( $inputParams[$blockName] );
@@ -408,15 +421,22 @@ class ECB2 extends CMSModule {
         $props = $params['content']->GetEditableProperties();
         $new_props = $params['content']->Properties();
         $clear_css_cache = false;
+        $old_props = NULL;  // loaded once, only if a clear_css_cache field exists
 
         foreach ($props as $prop) {
             if ( !$clear_css_cache && isset($prop->extra) && isset($prop->extra['module']) && 
                  $prop->extra['module']=='ECB2' && isset($prop->extra['params']['clear_css_cache']) ) {
                 // test if value has changed
-                $db = CmsApp::get_instance()->GetDb();
-                $query = 'SELECT content FROM '.CMS_DB_PREFIX.'content_props 
-                    WHERE content_id = ? AND prop_name = ?';
-                $old_value = $db->GetOne( $query, [$contentId, $prop->name] );
+                if ($old_props === NULL) {
+                    $db = CmsApp::get_instance()->GetDb();
+                    $query = 'SELECT prop_name, content FROM '.CMS_DB_PREFIX.'content_props WHERE content_id = ?';
+                    $old_props = [];
+                    $rows = $db->GetArray( $query, [$contentId] );
+                    foreach ($rows as $row) {
+                        $old_props[$row['prop_name']] = $row['content'];
+                    }
+                }
+                $old_value = $old_props[$prop->name] ?? NULL;
                 $new_value = $new_props[$prop->name];
                 if ($new_value != $old_value) $clear_css_cache = true;
             }
@@ -560,7 +580,7 @@ class ECB2 extends CMSModule {
                             $blockParams = $block->extra['params'];
                             $this->HandleFieldAliases($blockParams);       
                             if ( in_array($blockParams["field"], self::FIELD_TYPES ) ) {     
-                                $type = self::FIELD_DEF_PREFIX.$blockParams["field"];
+                                $type = self::FIELD_DEF_NAMESPACE.self::FIELD_DEF_PREFIX.$blockParams["field"];
                                 $ecb2 = new $type($this, $blockName, $value, $blockParams, FALSE, $one);
 
                                 $ecb2->AddSavedContentToSearchIndex($one);

@@ -4,8 +4,10 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
+
+namespace ECB2;
 
 abstract class ecb2_FieldDefBase 
 {
@@ -249,7 +251,7 @@ abstract class ecb2_FieldDefBase
                 return;  
             } 
 
-            $sub_type = $this->mod::FIELD_DEF_PREFIX.$sub_field_params['field'];
+            $sub_type = $this->mod::FIELD_DEF_NAMESPACE.$this->mod::FIELD_DEF_PREFIX.$sub_field_params['field'];
             $sub_name = $sub_field_params['name'];
             $sub_params = $sub_field_params;    // all except 'name'
             unset( $sub_params['name'] ); 
@@ -423,20 +425,22 @@ abstract class ecb2_FieldDefBase
      */
     protected function get_values_from_module($module_name, $module_params=[], $exclude_options=[])
     {
-        $module = cms_utils::get_module( $module_name );
+        $module = \cms_utils::get_module( $module_name );
         if ( !$module ) return;
 
         $module_params = [];
         foreach ($this->options as $key => $value) {
             if ( !in_array($key, $exclude_options) && !empty($value) ) $module_params[$key] = $value;
         }
-        $cms_module_call = "{cms_module module=".$module_name;
-        foreach ($module_params as $key => $value) {
-            $cms_module_call .= " $key=\"$value\"";
-        }
-
         $smarty = \CmsApp::get_instance()->GetSmarty();
-        $module_values = trim(strip_tags($smarty->fetch('string:'.$cms_module_call.'}')));
+        $tpl = $smarty->CreateTemplate( 'string:', null, null, $smarty );   // own scope, as {cms_module} does
+        $action = !empty($module_params['action']) ? $module_params['action'] : 'default';
+        unset( $module_params['module'], $module_params['action'] );
+        $returnid = \CmsApp::get_instance()->get_content_id();
+        ob_start();
+        $result = $module->DoActionBase( $action, 'm'.substr(md5($module_name.$action), 0, 5), $module_params, $returnid, $tpl );
+        if ( $result !== FALSE ) echo $result;
+        $module_values = trim(strip_tags(ob_get_clean()));
         $options = $smarty->getTemplateVars('options');
 
         if ( !empty($options) && is_array($options) ) {   // first see if $options array set 
@@ -458,12 +462,12 @@ abstract class ecb2_FieldDefBase
      */
     protected function get_values_from_udt($udt_name)
     {
-        if (!UserTagOperations::get_instance()->UserTagExists($this->options['udt'])) {
+        if (!\UserTagOperations::get_instance()->UserTagExists($this->options['udt'])) {
             $this->error = $this->mod->Lang('udt_error', $this->options['udt']);
             return;
         }
         $tmp = [];
-        $value_options = UserTagOperations::get_instance()->CallUserTag($this->options['udt'], $tmp);
+        $value_options = \UserTagOperations::get_instance()->CallUserTag($this->options['udt'], $tmp);
         if ( !$value_options ) {
             $value_options = [];
 
@@ -512,7 +516,7 @@ abstract class ecb2_FieldDefBase
      */
     protected function get_values_from_customgs($customgs_field)
     {
-        $CustomGS = cms_utils::get_module('CustomGS');
+        $CustomGS = \cms_utils::get_module('CustomGS');
         if ( !is_object($CustomGS) ) {
             $this->error = $this->mod->Lang('module_error', 'Custom Global Settings');
             return;
@@ -625,7 +629,7 @@ abstract class ecb2_FieldDefBase
      */
     protected function create_field_object( $inputArray = [] ) 
     {    
-        $field_object = new stdClass();
+        $field_object = new \stdClass();
         // $sub_fields = [];
         if ( empty($inputArray) || (count($inputArray)==1 && isset($inputArray['empty'])) ) {
             $field_object->sub_fields = [];
@@ -692,7 +696,7 @@ abstract class ecb2_FieldDefBase
 
             $allgroups = array();
             // get a hash of all of the groups and ids.
-            $tmp = CmsApp::get_instance()->GetGroupOperations()->LoadGroups();
+            $tmp = \CmsApp::get_instance()->GetGroupOperations()->LoadGroups();
             if ( !is_array($tmp) || count($tmp) == 0 ) return FALSE; // no groups?
             foreach( $tmp as $one ) {
                 if ( !$one->active ) continue;
@@ -719,7 +723,7 @@ abstract class ecb2_FieldDefBase
             $groups = array_unique($groups);
             $valid = FALSE;
             foreach( $groups as $gid ) {
-                $users = CmsApp::get_instance()->GetUserOperations()->LoadUsersInGroup($gid);
+                $users = \CmsApp::get_instance()->GetUserOperations()->LoadUsersInGroup($gid);
                 if ( !is_array($users) || !count($users) ) continue;
                 foreach( $users as $user ) {
                     if ( $user->id == $my_uid ) {

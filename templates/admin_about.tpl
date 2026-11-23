@@ -4,6 +4,10 @@
     <div class="pageoverflow">
         {$mod->Lang('about_c')}
     </div>
+    <div class="pageoverflow ecb2-changelog">
+        <h2 class="border-bottom m_top_25 p_bottom_5">{$mod->Lang('changelog')}</h2>
+        {$changelog}
+    </div>
 </div>
 
 

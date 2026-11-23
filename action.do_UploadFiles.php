@@ -4,7 +4,7 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
 
@@ -19,15 +19,20 @@ if ( isset($_FILES['file']) && is_array($_FILES['file']) &&
         foreach ( $uploads as $key => $value ) $uploads[$key] = [$value];
     }
 
+    $old_filename = ( isset($_POST['old']) && is_string($_POST['old']) ) ? $_POST['old'] : '';
     foreach ($uploads['error'] as $key => $error) {
         $original_filename = $uploads['name'][$key] ?? '';
         $tmp_filename = $uploads['tmp_name'][$key] ?? '';
         $success = false;
+        $new_filename = \ECB2\ecb2_FileUtils::sanitise_upload_filename($original_filename);
+        if ( $old_filename !== '' && $new_filename === $old_filename ) {    // replacing an image with same name
+            $new_filename = \ECB2\ecb2_FileUtils::add_filename_suffix($new_filename);
+        }
         if ( (int)$error === UPLOAD_ERR_OK ) {
-            $success = ecb2_FileUtils::ECB2MoveUploadedFile( $original_filename, $tmp_filename );
+            $success = \ECB2\ecb2_FileUtils::ECB2MoveUploadedFile( $original_filename, $tmp_filename, $new_filename );
         }
         $result[] = [
-            'name' => $original_filename,
+            'name' => $success ? $new_filename : $original_filename,
             'success' => $success
         ];
     }

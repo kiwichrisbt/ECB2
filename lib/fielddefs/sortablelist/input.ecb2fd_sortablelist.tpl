@@ -9,7 +9,7 @@
     $fieldname: {$fieldname}
     -->
     <input type="hidden" id="{$fieldid}" name="{$fieldname}" value="{$selected_str}" size="100" class="{if $is_sub_field && is_null($sub_row_number)}repeater-field{/if}" {if $is_sub_field && is_null($sub_row_number)}data-repeater="#{$block_name}-repeater" data-field-name="{$block_name}"{/if} />
-    <div class="c_full cf ecb2-cb {$name}"> 
+    <div class="c_full cf ecb2-cb"> 
         <div class="grid_6 alpha">
             <fieldset>
                 <legend>{if $labelLeft!=''}{$labelLeft}{else}{$mod->Lang('content_block_label_selected')}{/if}</legend>

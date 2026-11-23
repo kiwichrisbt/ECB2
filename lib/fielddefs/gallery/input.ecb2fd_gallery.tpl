@@ -24,7 +24,8 @@
         {if !empty($sub_fields)}
             <button class="dz-edit ecb2-btn ecb2-btn-default" title="Edit sub-fields" role="button" aria-disabled="false"><span class="ecb2-icon-pencil"></span></button>
         {/if}
-            <button class="dz-remove ecb2-btn ecb2-btn-default" data-dz-remove title="Remove image" role="button" aria-disabled="false"><span class="ecb2-icon-trash-can-regular"></span></button>
+            <button class="dz-remove ecb2-btn ecb2-btn-default" data-dz-remove data-confirm="{$remove_confirm|escape}" title="Remove image" role="button" aria-disabled="false"><span class="ecb2-icon-trash-can-regular"></span></button>
+            <button class="dz-replace ecb2-btn ecb2-btn-default" title="Replace image" role="button" aria-disabled="false"><span class="ecb2-icon-image"></span></button>
             <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>
             <div class="dz-success-mark"><i class="ecb2-icon-check"></i></div>
             <div class="dz-error-mark"><i class="ecb2-icon-xmark"></i></div>

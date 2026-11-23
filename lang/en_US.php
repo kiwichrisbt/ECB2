@@ -3,6 +3,7 @@
 #region Language Strings
 
 $lang['about'] = 'About';
+$lang['changelog'] = 'Changelog';
 $lang['add_item'] = 'Add item';
 $lang['add_line'] = 'Add line';
 $lang['admin_only_help'] = 'Admin only fields';
@@ -16,6 +17,7 @@ $lang['adminSectionOptions'] = [
     'admin' => 'siteadmin',
     'myprefs' => 'myprefs'
 ];
+$lang['admindescription'] = 'Extended Content Blocks 2 - Manage content blocks for page templates';
 
 
 $lang['content_block_label_selected'] = 'Selected';
@@ -29,6 +31,7 @@ $lang['drop_required_items'] = 'Drop %s required items here';
 $lang['error_assign_required'] = 'The assign parameter is required to correctly output multiple values.';
 $lang['error_filename'] = 'The file \'%s\' for the \'%s\' parameter could not be found.';
 
+$lang['error_no_filepicker'] = 'FilePicker module not found';
 $lang['error_sub_field_type_missing'] = 'A sub field type has not been provided.';
 $lang['error_sub_field_type_not_allowed'] = 'The sub field type \'%s\' is not supported.';
 $lang['error_sub_field_name_missing'] = 'The sub field type \'%s\' requires a valid name to be provided.';
@@ -38,7 +41,7 @@ $lang['extended_content_blocks'] = 'Extended Content Blocks';
 
 $lang['fields'] = 'Fields';
 $lang['field_error'] = 'Please specify a correct field parameter for the ECB2 content block \'%s\'.';
-$lang['field_types'] = 'Field types';
+$lang['field_types'] = 'Field Types';
 $lang['friendlyname'] = 'Extended Content Blocks';
 
 $lang['gallery_module_error'] = 'Gallery module is not installed.';
@@ -70,6 +73,7 @@ $lang['postuninstall'] = 'Extended Content Blocks was successful uninstalled';
 
 $lang['really_uninstall'] = 'Really? Are you sure you want to uninstall the ECB2 module?';
 $lang['remove'] = 'Remove';
+$lang['remove_image_confirm'] = 'Are you sure you want to remove this image?';
 $lang['remove_line'] = 'Remove item';
 
 $lang['save_options'] = 'Save Options';
@@ -97,10 +101,7 @@ $lang['upgraded'] = 'Module upgraded to version %s.';
 
 #region Help
 
-$lang['general_c'] = <<<'EOD'
-<p>The Extended Content Blocks (ECB2) module to give you more page editing options. Many aditional content block types are available to use in each page template. e.g. dropdown, colour picker, checkbox, radio button, and many more.</p>
-<br>
-
+$lang['usage'] = <<<'EOD'
 <h3>Usage</h3>
 <p>Use the CMSMS core <b>{content_module}</b> tag to add all ECB2 content blocks to any page template.</p>
 <pre>{content_module module=ECB2 field=some_field_type block='some name' ...}</pre>
@@ -125,7 +126,7 @@ EOD;
 $lang['about_c'] = <<<'EOD'
 <p>ECB2 provides additional Content Blocks for use in page templates for CMS Made Simple v2+.</p>
 
-<p>Thanks to Matt @DIGI3 & Simon @Simon66, for the sponsorship of this module that have supported the development of these new features.</p>
+<p>Thanks to Matt (@DIGI3), Simon (@Simon66) & @Ludger Merkens, for the sponsorship of this module that have supported the development of these new features.</p>
 <p>Thanks to Tom Phane @tomph, for his code improvements, optimisations, and help content (especially a great simple smarty tip).</p>
 <p>The ECB2 module is a fork of the module Extended Content Blocks (ECB), for CMSMS v1, developed by Zdeno Kuzmany.</p>
 <br><br>

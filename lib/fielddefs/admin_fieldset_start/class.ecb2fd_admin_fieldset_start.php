@@ -4,9 +4,11 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
+
+namespace ECB2;
 
 class ecb2fd_admin_fieldset_start extends ecb2_FieldDefBase 
 {
@@ -37,6 +39,7 @@ class ecb2fd_admin_fieldset_start extends ecb2_FieldDefBase
     {
         $this->default_parameters = [
             'legend'        => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING], 
+            'collapsible'   => ['default' => FALSE, 'filter' => FILTER_VALIDATE_BOOLEAN],
             'admin_groups'  => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
             'description'   => ['default' => '',    'filter' => FILTER_DEFAULT]
         ];
@@ -59,7 +62,10 @@ class ecb2fd_admin_fieldset_start extends ecb2_FieldDefBase
         $smarty = \CmsApp::get_instance()->GetSmarty();
         $tpl = $smarty->CreateTemplate( 'string:'.$this->get_template(), null, null, $smarty );
         $tpl->assign('block_name', $this->block_name );
-        $tpl->assign('legend', $this->options['legend'] );
+        // a collapsible fieldset needs a legend to click on
+        $legend = ( $this->options['collapsible'] && $this->options['legend']==='' ) ? $this->block_name : $this->options['legend'];
+        $tpl->assign('legend', $legend );
+        $tpl->assign('collapsible', $this->options['collapsible'] );
         $tpl->assign('description', $this->options['description'] );
         $tpl->assign('is_demo', $this->demo_count>0 );
         return $tpl->fetch();

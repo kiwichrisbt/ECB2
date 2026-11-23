@@ -4,9 +4,11 @@
 # Author: Chris Taylor
 # Copyright: (C) 2016-2023 Chris Taylor, chris@binnovative.co.uk
 # Licence: GNU General Public License version 3
-#          see /ECB2/lang/LICENCE.txt or <http://www.gnu.org/licenses/gpl-3.0.html>
+#          see /ECB2/docs/LICENSE or <http://www.gnu.org/licenses/gpl-3.0.html>
 #---------------------------------------------------------------------------------------------------
 
+
+namespace ECB2;
 
 class ecb2fd_module_picker extends ecb2_FieldDefBase 
 {
@@ -66,14 +68,14 @@ class ecb2fd_module_picker extends ecb2_FieldDefBase
         $modules = $modops->GetInstalledModules();
         $modulesarray = ['' => $this->mod->Lang('none_selected') ];
         foreach ($modules as $module) {
-            $mod = cms_utils::get_module($module);
+            $mod = \cms_utils::get_module($module);
             if (is_object($mod)) {
                 $name = $mod->GetFriendlyName();
                 $modulesarray[$module] = ($name) ? $name : $module;
             }
         }
         if (class_exists('Collator')) {
-            $coll = new Collator('en_US'); // TODO default locale always ok?
+            $coll = new \Collator('en_US'); // TODO default locale always ok?
             uksort($modulesarray, function($a, $b) use ($coll) {
                 return collator_compare($coll, $a, $b);
             });
