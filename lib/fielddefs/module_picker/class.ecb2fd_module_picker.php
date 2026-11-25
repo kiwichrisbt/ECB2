@@ -37,6 +37,7 @@ class ecb2fd_module_picker extends ecb2_FieldDefBase
      */
     public function set_field_parameters() 
     {
+        $this->field_aliases = ['module'];
         $this->parameter_aliases = [
             'default_value' => 'default'
         ];

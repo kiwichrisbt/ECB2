@@ -177,6 +177,7 @@ class ecb2fd_gallery extends ecb2_FieldDefBase
      */
     public function set_field_parameters() 
     {
+        $this->field_aliases = ['image'];
         $this->default_parameters = [
             'dir'               => ['default' => '',     'filter' => self::ECB2_SANITIZE_STRING],
             'resize_width'      => ['default' => 0,      'filter' => FILTER_VALIDATE_INT],
@@ -217,7 +218,7 @@ class ecb2fd_gallery extends ecb2_FieldDefBase
             'filename',
             'file_location'
         ];
-
+        $this->help_category = self::ECB2_HELP_CATEGORY_MULTI;
 
     }
 
@@ -290,6 +291,7 @@ class ecb2fd_gallery extends ecb2_FieldDefBase
         $tpl->assign( 'thumbnail_height', $thumbnail_height );
         $tpl->assign( 'max_files', $max_files );
         $tpl->assign( 'max_files_text', $max_files_text );
+        $tpl->assign( 'max_filesize', ecb2_FileUtils::getMaxUploadFilesize() );
         $tpl->assign( 'thumbnail_prefix', ecb2_FileUtils::THUMB_PREFIX );
         $tpl->assign( 'type', $this->field );
         $tpl->assign( 'action_url', $action_url );

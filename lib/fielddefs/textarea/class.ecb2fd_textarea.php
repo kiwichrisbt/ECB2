@@ -43,6 +43,9 @@ class ecb2fd_textarea extends ecb2_FieldDefBase
      */
     public function set_field_parameters() 
     {
+        $this->field_aliases = [
+            'editor',
+        ];
         // $this->restrict_params = FALSE;    // default: true
         // $this->use_json_format = TRUE;    // default: FALSE - can override e.g. 'groups' type
         $this->searchable_content = TRUE;

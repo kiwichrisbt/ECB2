@@ -627,6 +627,60 @@ class ecb2_FileUtils
         }
     }
 
+    /**
+     *  Get the maximum upload filesize in bytes
+     *  Takes the smallest limit from: upload_max_filesize, post_max_size, and php memory limit
+     *
+     *  @return int maximum filesize in bytes
+     */
+    public static function getMaxUploadFilesize()
+    {
+        $limits = [];
+        
+        $upload_max = ini_get('upload_max_filesize');
+        if ($upload_max !== FALSE && $upload_max !== '') {
+            $limits[] = self::convertIniSizeToBytes($upload_max);
+        }
+        
+        $post_max = ini_get('post_max_size');
+        if ($post_max !== FALSE && $post_max !== '') {
+            $limits[] = self::convertIniSizeToBytes($post_max);
+        }
+        
+        $memory_limit = ini_get('memory_limit');
+        if ($memory_limit !== FALSE && $memory_limit !== '' && $memory_limit !== '-1') {
+            // Use a fraction of memory limit to be safe (e.g., 90%)
+            $limits[] = (int)(self::convertIniSizeToBytes($memory_limit) * 0.9);
+        }
+        
+        return !empty($limits) ? min($limits) : 10485760; // 10MB default fallback
+    }
 
+    /**
+     *  Convert PHP ini size notation (e.g., "50M", "1G") to bytes
+     *
+     *  @param string $value PHP ini size value
+     *  @return int size in bytes
+     */
+    protected static function convertIniSizeToBytes($value)
+    {
+        $value = trim($value);
+        $last = strtolower($value[strlen($value) - 1]);
+        $bytes = (int)$value;
+        
+        switch ($last) {
+            case 'g':
+                $bytes *= 1024;
+                // fall through
+            case 'm':
+                $bytes *= 1024;
+                // fall through
+            case 'k':
+                $bytes *= 1024;
+                break;
+        }
+        
+        return $bytes;
+    }
 
 }

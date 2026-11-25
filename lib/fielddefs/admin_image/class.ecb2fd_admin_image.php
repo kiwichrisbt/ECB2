@@ -42,6 +42,7 @@ class ecb2fd_admin_image extends ecb2_FieldDefBase
             'admin_groups'  => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
             'description'   => ['default' => '',    'filter' => FILTER_DEFAULT]
         ];
+        $this->help_category = self::ECB2_HELP_CATEGORY_ADMIN;
         // $this->parameter_aliases = [ 'alias' => 'parameter' ];
         // $this->restrict_params = FALSE;    // default: true
 

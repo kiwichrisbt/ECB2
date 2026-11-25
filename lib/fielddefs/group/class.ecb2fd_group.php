@@ -75,6 +75,7 @@ class ecb2fd_group extends ecb2_FieldDefBase
         // $this->sub_fields_ignored_names = [];
         $this->sub_fields_required = TRUE;
         $this->layout_options = ['table','block'];  // block, grid ...
+        $this->help_category = self::ECB2_HELP_CATEGORY_MULTI;
 
     }
 

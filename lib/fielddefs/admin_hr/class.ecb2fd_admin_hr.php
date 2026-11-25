@@ -37,6 +37,7 @@ class ecb2fd_admin_hr extends ecb2_FieldDefBase
      */
     public function set_field_parameters() 
     {
+        $this->field_aliases = ['hr'];
         $this->default_parameters = [
             ''              => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
             ''              => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
@@ -44,6 +45,7 @@ class ecb2fd_admin_hr extends ecb2_FieldDefBase
             'admin_groups'  => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
             'description'   => ['default' => '',    'filter' => FILTER_DEFAULT]
         ];
+        $this->help_category = self::ECB2_HELP_CATEGORY_ADMIN;
         // $this->parameter_aliases = [ 'alias' => 'parameter' ];
         // $this->restrict_params = FALSE;    // default: true
 

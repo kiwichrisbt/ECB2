@@ -2,6 +2,11 @@
 
 #region Language Strings
 
+$lang['1_MULTI'] = 'Multiple-field types';
+$lang['2_SINGLE'] = 'Single-field types';
+$lang['3_ADMIN'] = 'Admin only fields';
+$lang['uncategorized'] = 'Uncategorized';
+
 $lang['about'] = 'About';
 $lang['changelog'] = 'Changelog';
 $lang['add_item'] = 'Add item';

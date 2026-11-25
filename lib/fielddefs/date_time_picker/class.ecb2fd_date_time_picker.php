@@ -37,6 +37,7 @@ class ecb2fd_date_time_picker extends ecb2_FieldDefBase
      */
     public function set_field_parameters() 
     {
+        $this->field_aliases = ['timepicker', 'datepicker'];
         $this->default_parameters = [
             'size'              => ['default' => 20,        'filter' => FILTER_VALIDATE_INT],
             'label'             => ['default' => '',        'filter' => self::ECB2_SANITIZE_STRING],

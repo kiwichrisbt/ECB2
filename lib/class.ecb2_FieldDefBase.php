@@ -12,6 +12,9 @@ namespace ECB2;
 abstract class ecb2_FieldDefBase 
 {
     const ECB2_SANITIZE_STRING = 1001;     // FILTER_SANITIZE_STRING replacement
+    const ECB2_HELP_CATEGORY_MULTI = '1_MULTI';
+    const ECB2_HELP_CATEGORY_SINGLE = '2_SINGLE';  // default
+    const ECB2_HELP_CATEGORY_ADMIN = '3_ADMIN';
 
     protected $mod;
     protected $block_name;
@@ -24,7 +27,7 @@ abstract class ecb2_FieldDefBase
     protected $adding;
     protected $default_parameters;
     protected $options;
-    protected $alias;
+    protected $alias;               // sanitized alias for the block name e.g. can be used as a CSS class or HTML id attribute
     protected $restrict_params;
     protected $field_alias_used;
     protected $parameter_aliases;
@@ -38,6 +41,8 @@ abstract class ecb2_FieldDefBase
     protected $sub_fields_required;
     protected $cached_template;
     
+    public array $field_aliases = []; // array of field aliases for this block
+    public string $help_category; //  ('single' (default), 'multi', 'admin')
     public $use_json_format;
     public $allowed_sub_fields;
     public $searchable_content;
@@ -78,6 +83,7 @@ abstract class ecb2_FieldDefBase
         }
         $this->parameter_aliases = [];
         $this->demo_count = 0;
+        $this->help_category =  self::ECB2_HELP_CATEGORY_SINGLE; // default category for help display
         $this->use_json_format = FALSE;     // single value stored as string ECB2 v1 format for simple fields
         //   once stored as json always stored as jason (output as object not string) - changed to output set by fieldtype
         //if ( !empty($params['repeater']) ) $this->use_json_format = TRUE; // move into fielddef
@@ -224,11 +230,11 @@ abstract class ecb2_FieldDefBase
         foreach ($sub_params as $sub_field_params) {
             // handle Sub Field Aliases
             if ( isset($sub_field_params['field']) && 
-                 !in_array($sub_field_params['field'], $this->mod::FIELD_TYPES) && 
-                 array_key_exists($sub_field_params['field'], $this->mod::FIELD_ALIASES) ) 
+                 !in_array($sub_field_params['field'], $this->mod::getFieldTypes()) && 
+                 array_key_exists($sub_field_params['field'], $this->mod::getFieldAliases()) ) 
             {
                 $sub_field_params['field_alias_used'] = $sub_field_params['field'];
-                $sub_field_params['field'] = $this->mod::FIELD_ALIASES[$sub_field_params['field']];
+                $sub_field_params['field'] = $this->mod::getFieldAliases()[$sub_field_params['field']];
             }
 
             // test for valid field type & name

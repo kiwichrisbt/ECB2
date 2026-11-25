@@ -37,6 +37,13 @@ class ecb2fd_dropdown extends ecb2_FieldDefBase
      */
     public function set_field_parameters() 
     {
+        $this->field_aliases = [
+            'select', 
+            'dropdown_from_module', 
+            'dropdown_from_udt',
+            'dropdown_from_gbc', 
+            'dropdown_from_customgs',
+        ];
         $this->restrict_params = FALSE;    // default: TRUE - needed for module call
         $this->parameter_aliases = [
             'gcb' => 'template',

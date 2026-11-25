@@ -43,11 +43,11 @@ class ecb2fd_ZZZ extends ecb2_FieldDefBase
         $this->default_parameters = [
             'label'         => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
             ''              => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
-            ''              => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
             'default_value' => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING], 
             'admin_groups'  => ['default' => '',    'filter' => self::ECB2_SANITIZE_STRING],
-            'description'   => ['default' => '',    'filter' => FILTER_DEFAULT]
+            'description'   => ['default' => '',    'filter' => FILTER_DEFAULT],
         ];
+        $this->help_category = self::ECB2_HELP_CATEGORY_SINGLE; 
         // $this->parameter_aliases = [ 'alias' => 'parameter' ];
         // $this->restrict_params = FALSE;    // default: true
         // $this->use_json_format = TRUE;     // default: FALSE - can override e.g. 'groups' type

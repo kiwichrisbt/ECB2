@@ -44,6 +44,7 @@ class ecb2fd_textinput extends ecb2_FieldDefBase
      */
     public function set_field_parameters() 
     {
+        $this->field_aliases = ['input', 'input_repeater'];
         $this->parameter_aliases = [
             'default_value' => 'default'
         ];

@@ -37,6 +37,7 @@ class ecb2fd_page_picker extends ecb2_FieldDefBase
      */
     public function set_field_parameters() 
     {
+        $this->field_aliases = ['pages'];
         $this->parameter_aliases = [
             'default_value' => 'default'
         ];

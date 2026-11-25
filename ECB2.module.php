@@ -30,54 +30,6 @@ class ECB2 extends CMSModule {
     const DEVELOPMENT_MODE = false;          // set to false for production releases
     const MANAGE_PERM = 'manage_ecb2';      // duplicated in upgrade action
 
-    const FIELD_TYPES = [
-        'textinput',
-        'textarea',
-        'dropdown',
-        'sortablelist',
-        'checkbox',
-        'radio',
-        'gallery',
-        'color_picker',
-        'date_time_picker',
-        'file_selector',
-        'file_picker',
-        'page_picker',
-        'gallery_picker',
-        'module_picker',
-        'hidden',
-        'group',
-            // admin only fields below here... (only because of a help subheading)
-        'admin_fieldset_start',
-        'admin_fieldset_end',
-        'admin_hr',
-        'admin_image',
-        'admin_link',
-        'admin_module_link',
-        'admin_text'
-    ];
-    const FIRST_ADMIN_ONLY_FIELD = 'admin_fieldset_start';    // only to trigger help subheading
-    const FIELD_ALIASES = [
-        'input' => 'textinput',
-        'editor' => 'textarea',
-        'select' => 'dropdown', 
-        'dropdown_from_module' => 'dropdown', 
-        'dropdown_from_udt' => 'dropdown',
-        'dropdown_from_gbc' => 'dropdown', 
-        'dropdown_from_customgs' => 'dropdown',
-        'timepicker' => 'date_time_picker',
-        'datepicker' => 'date_time_picker',
-        'pages' => 'page_picker',
-        'module' => 'module_picker',
-        'fieldset_start' => 'admin_fieldset_start',
-        'fieldset_end' => 'admin_fieldset_end',
-        'hr' => 'admin_hr',
-        'text' => 'admin_text',
-        'link' => 'admin_link',
-        'module_link' => 'admin_module_link',
-        'input_repeater' => 'textinput',
-        'image' => 'gallery',
-    ];
     const OUTPUT_FORMAT_DEFAULT = 'string';
     const OUTPUT_FORMAT = [ // 'string' (default), 'array','array_or_string','object','string_separated'
         'gallery' => 'object',
@@ -92,11 +44,16 @@ class ECB2 extends CMSModule {
     const FIELD_DEF_NAMESPACE = 'ECB2\\';
     const FIELD_DEF_PREFIX = 'ecb2fd_';
     const FIELD_DEF_CLASS_PREFIX = 'class.';
+    const FIELD_DEF_PATH = 'lib/fielddefs';
     const INPUT_TEMPLATE_PREFIX = 'input.';
     const HELP_TEMPLATE_PREFIX = 'help.';
     const DEMO_BLOCK_PREFIX = 'demo_';
 
-    public function GetName() { return 'ECB2';  }
+    private static $_field_types = null;
+    private static $_field_aliases = null;
+    private static $_field_details = null;
+
+    public function GetName() { return 'ECB2'; }
     public function GetFriendlyName() { return $this->Lang('friendlyname'); }
     public function GetVersion() { return self::MODULE_VERSION; }
     public function MinimumCMSVersion() { return '2.0'; }
@@ -132,7 +89,6 @@ class ECB2 extends CMSModule {
     }
 
 
-
     public function __construct() 
     {
         parent::__construct();
@@ -144,9 +100,9 @@ class ECB2 extends CMSModule {
     }
 
 
-
     /**
      *  Internal autoloader
+     *  @param string $classname - fully qualified class name to autoload
      */
     private function _autoloader($classname)
     {
@@ -165,6 +121,93 @@ class ECB2 extends CMSModule {
         $this->RegisterModulePlugin();
     }
 
+
+
+    /**
+     *  Get available field types, aliases & details - save in static properties
+     *  @return array field type names
+     *  @note This method also populates self::$_field_details and self::$_field_aliases
+     */
+    public static function getFieldTypes()
+    {
+        if (self::$_field_types === null) {
+            $field_details = self::getFieldDetailsFromDefinitions();
+            $field_aliases = [];
+            foreach ($field_details as $field_type => $details) {
+                foreach ($details['field_aliases'] as $alias) {
+                    if (isset($field_aliases[$alias])) {
+                        throw new \RuntimeException(
+                            "Duplicate field alias '$alias' in '$field_type' and '{$field_aliases[$alias]}'"
+                        );
+                    }
+                    $field_aliases[$alias] = $field_type;
+                }
+            }
+            self::$_field_details = $field_details;
+            self::$_field_aliases = $field_aliases;
+            self::$_field_types = array_keys($field_details);
+        }
+        return self::$_field_types;
+    }
+
+
+    /**
+     *  Get field aliases mapped to field types
+     *  @return array field aliases mapped to field types
+     */
+    public static function getFieldAliases()
+    {
+        if (self::$_field_aliases === null) {
+            self::getFieldTypes(); // ensure field types and aliases are loaded
+        }
+        return self::$_field_aliases;
+    }
+
+
+    /**
+     *  Discover and return available fields and details by scanning field definition directories
+     *  @return array field type names, or if $byHelpCategory is true, array grouped by category
+     */
+    private static function getFieldDetailsFromDefinitions()
+    {
+        $field_types = [];       
+        if (!is_dir( __DIR__.'/'.self::FIELD_DEF_PATH )) return [];
+        
+        $entries = @scandir( __DIR__.'/'.self::FIELD_DEF_PATH );
+        if ($entries === false) return [];
+        
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..' || $entry[0] === '_') continue;
+
+            $field_def_path = __DIR__.'/'.self::FIELD_DEF_PATH . '/' . $entry;
+            if (!is_dir($field_def_path)) continue;
+            
+            $class_file = $field_def_path . '/' . self::FIELD_DEF_CLASS_PREFIX . self::FIELD_DEF_PREFIX . $entry . '.php';
+            if (file_exists($class_file)) {
+                $field_types[] = $entry;
+            }
+        }
+        
+        $field_details = [];
+        $ecb2_module = \cms_utils::get_module( 'ECB2' );
+        foreach ($field_types as $field_type) {
+            try {
+                $class_name = self::FIELD_DEF_NAMESPACE . self::FIELD_DEF_PREFIX . $field_type;
+                if (class_exists($class_name)) {
+                    // Create a temporary instance $ecb2_fd to get field_aliases & help_category
+                    $ecb2_fd = new $class_name($ecb2_module, '', '', ['field' => $field_type], false);
+                    $field_details[$field_type]['field_aliases'] = $ecb2_fd->field_aliases ?? [];
+                    $field_details[$field_type]['help_category'] = $ecb2_fd->help_category ?? 'uncategorized';
+                }
+            } catch (\Exception $e) {
+                error_log('Failed to instantiate field type ' . $field_type . ': ' . $e->getMessage());
+            }
+        }
+
+        ksort($field_details);
+
+        return $field_details;
+    }
 
 
     /**
@@ -190,15 +233,28 @@ class ECB2 extends CMSModule {
 
         $tpl = $smarty->CreateTemplate( $this->GetTemplateResource('admin_content_blocks.tpl'), null, null, $smarty );
         $tpl->assign('mod', $this);
-        $tpl->assign('field_types', self::FIELD_TYPES);
-        $tpl->assign('first_admin_only_field', self::FIRST_ADMIN_ONLY_FIELD);
+
+
+        // get field types categorised by Help Category
+        $tmp_field_types = $this->getFieldTypes();  // make sure field types & details are loaded
+        $categorised_field_types = [];
+        foreach(self::$_field_details as $field_type => $details) {
+            $help_category = $details['help_category'] ?? 'uncategorized';
+            if (!isset($categorised_field_types[$help_category])) {
+                $categorised_field_types[$help_category] = [];
+            }
+            $categorised_field_types[$help_category][$field_type] = $field_type;
+        }
+        $tpl->assign('categorised_field_types', $categorised_field_types);
         $tpl->assign('readme_contents', $readme_contents);
         $field_help = [];
-        foreach(self::FIELD_TYPES as $field_type) {
-            $type = self::FIELD_DEF_NAMESPACE.self::FIELD_DEF_PREFIX.$field_type;
-            if ( class_exists($type) ) {    // stops errors with old field types on upgrade
-                $ecb2 = new $type($this, $this::DEMO_BLOCK_PREFIX.$field_type, NULL, ['field' => $field_type], TRUE);
-                $field_help[$field_type] = $ecb2->get_field_help();
+        foreach($categorised_field_types as $help_category => $field_types) {
+            foreach($field_types as $field_type => $details) {
+                $type = self::FIELD_DEF_NAMESPACE.self::FIELD_DEF_PREFIX.$field_type;
+                if ( class_exists($type) ) {    // stops errors with old field types on upgrade
+                    $ecb2 = new $type($this, $this::DEMO_BLOCK_PREFIX.$field_type, NULL, ['field' => $field_type], TRUE);
+                    $field_help[$field_type] = $ecb2->get_field_help();
+                }
             }
         }
         $tpl->assign('field_help', $field_help);
@@ -273,7 +329,7 @@ class ECB2 extends CMSModule {
         $this->get_admin_css_js( TRUE );   // output css & js - but only once per page
 
         $this->HandleFieldAliases($params);       
-        if ( !in_array($params["field"], self::FIELD_TYPES ) ) {
+        if ( !in_array($params["field"], self::getFieldTypes() ) ) {
             return $this->error_msg( $this->Lang('field_error', $blockName) );
         }     
 
@@ -352,7 +408,7 @@ class ECB2 extends CMSModule {
             // a hack for backwards compatibility for input_repeater - if assign not used
             switch ( $this->OutputFormat($blockparams) ) {
                 case 'string':
-                    return $json_data->values[0];
+                    return $json_data->values[0] ?? '';
                     break;
 
                 case 'string_separated':      // e.g. 'input_repeater' & 'assign' not set
@@ -465,10 +521,10 @@ class ECB2 extends CMSModule {
      */
     private function HandleFieldAliases( &$params ) 
     {
-        if ( !in_array($params['field'], self::FIELD_TYPES) && 
-              array_key_exists($params['field'], self::FIELD_ALIASES) ) {
+        if ( !in_array($params['field'], self::getFieldTypes()) && 
+              array_key_exists($params['field'], self::getFieldAliases()) ) {
             $params['field_alias_used'] = $params['field'];
-            $params['field'] = self::FIELD_ALIASES[$params['field']];
+            $params['field'] = self::getFieldAliases()[$params['field']];
         }
     }
 
@@ -579,7 +635,7 @@ class ECB2 extends CMSModule {
                             // JSON is valid and not just a simple string 
                             $blockParams = $block->extra['params'];
                             $this->HandleFieldAliases($blockParams);       
-                            if ( in_array($blockParams["field"], self::FIELD_TYPES ) ) {     
+                            if ( in_array($blockParams["field"], self::getFieldTypes() ) ) {     
                                 $type = self::FIELD_DEF_NAMESPACE.self::FIELD_DEF_PREFIX.$blockParams["field"];
                                 $ecb2 = new $type($this, $blockName, $value, $blockParams, FALSE, $one);
 
